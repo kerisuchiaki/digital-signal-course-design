@@ -18,6 +18,10 @@ def rotate(img, yaw):
 # 1.3图像剪切
 def cut(img, x_lt, y_lt, x_rb, y_rb):
     return img[x_lt:x_rb, y_lt:y_rb]
+# cut函数接受一个图像 (img) 和四个整数参数 (x_lt, y_lt, x_rb, y_rb)，这四个参数分别表示要剪切区域的左上角和右下角的坐标。
+# x_lt和y_lt表示剪切区域的左上角坐标（x坐标和y坐标），而x_rb和y_rb表示剪切区域的右下角坐标。
+# img[x_lt:x_rb, y_lt:y_rb] 使用 NumPy 数组切片的方式，从原始图像中提取出指定区域。
+# 最后，函数返回剪切后的图像区域。
 
 
 # 1.4图像缩放
