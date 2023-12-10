@@ -8,56 +8,65 @@ class ImageProcessorApp:
         self.root = root
         self.root.title("图像处理程序")
 
+        # 创建一个Frame用于放置图片
+        self.image_frame = ttk.Frame(self.root)
+        self.image_frame.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # 创建一个Frame用于放置按钮
+        self.button_frame = ttk.Frame(self.root)
+        self.button_frame.pack(side=tk.LEFT, padx=5, pady=5)
+
         # 创建加载图片按钮
-        self.load_button = ttk.Button(self.root, text="加载图片", command=self.load_image)
-        self.load_button.pack(side=tk.LEFT, padx=5, pady=5)
+        self.load_button = ttk.Button(self.button_frame, text="加载图片", command=self.load_image)
+        self.load_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建处理图片按钮
-        self.process_button = ttk.Button(self.root, text="处理图片", command=self.process_image)
-        self.process_button.pack(side=tk.RIGHT, padx=5, pady=5)
+        self.process_button = ttk.Button(self.button_frame, text="处理图片", command=self.process_image)
+        self.process_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建显示图片的画布
-        self.canvas = tk.Canvas(self.root, width=400, height=400)
-        self.canvas.pack()
-        self.canvas1 = tk.Canvas(self.root, width=400, height=400)
-        self.canvas1.pack()
+        self.canvas = tk.Canvas(self.image_frame, width=400, height=400)
+        self.canvas.pack(side=tk.TOP)
+
+        self.canvas1 = tk.Canvas(self.image_frame, width=400, height=400)
+        self.canvas1.pack(side=tk.TOP)
 
         # 创建用于显示图片路径的Label
-        self.image_path_label = tk.Label(self.root, text="当前图片路径：")
+        self.image_path_label = tk.Label(self.image_frame, text="当前图片路径：")
         self.image_path_label.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建功能按钮
-        self.crop_button = ttk.Button(self.root, text="裁剪", command=self.crop_image)
-        self.crop_button.pack(side=tk.LEFT, padx=5, pady=5)
+        self.crop_button = ttk.Button(self.button_frame, text="裁剪", command=self.crop_image)
+        self.crop_button.pack(side=tk.TOP, padx=5, pady=5)
 
-        self.rotate_button = ttk.Button(self.root, text="旋转", command=self.rotate_image)
-        self.rotate_button.pack(side=tk.LEFT, padx=5, pady=5)
+        self.rotate_button = ttk.Button(self.button_frame, text="旋转", command=self.rotate_image)
+        self.rotate_button.pack(side=tk.TOP, padx=5, pady=5)
 
-        self.brightness_label = tk.Label(self.root, text="亮度调整")
+        self.brightness_label = tk.Label(self.button_frame, text="亮度调整")
         self.brightness_label.pack(side=tk.TOP)
-        self.brightness_scale = Scale(self.root, from_=0, to=200, orient=tk.HORIZONTAL, length=200)
+        self.brightness_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200)
         self.brightness_scale.set(100)
         self.brightness_scale.pack(side=tk.TOP)
 
-        self.contrast_label = tk.Label(self.root, text="对比度调整")
+        self.contrast_label = tk.Label(self.button_frame, text="对比度调整")
         self.contrast_label.pack(side=tk.TOP)
-        self.contrast_scale = Scale(self.root, from_=0, to=200, orient=tk.HORIZONTAL, length=200)
+        self.contrast_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200)
         self.contrast_scale.set(100)
         self.contrast_scale.pack(side=tk.TOP)
 
 
 
         # 创建亮度调整控件
-        self.brightness_label = tk.Label(self.root, text="亮度调整")
+        self.brightness_label = tk.Label(self.button_frame, text="亮度调整（实时）")
         self.brightness_label.pack(side=tk.TOP)
-        self.brightness_scale = Scale(self.root, from_=0, to=200, orient=tk.HORIZONTAL, length=200,command=self.adjust_brightness)
+        self.brightness_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,command=self.adjust_brightness)
         self.brightness_scale.set(100)
         self.brightness_scale.pack(side=tk.TOP)
 
         # 创建对比度调整控件
-        self.contrast_label = tk.Label(self.root, text="对比度调整")
+        self.contrast_label = tk.Label(self.button_frame, text="对比度调整（）")
         self.contrast_label.pack(side=tk.TOP)
-        self.contrast_scale = Scale(self.root, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
+        self.contrast_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
                                     command=self.adjust_contrast)
         self.contrast_scale.set(100)
         self.contrast_scale.pack(side=tk.TOP)
@@ -67,7 +76,7 @@ class ImageProcessorApp:
         # ... (之前的初始化代码)
 
         # 创建撤销按钮
-        self.undo_button = ttk.Button(self.root, text="撤销", command=self.undo_image)
+        self.undo_button = ttk.Button(self.button_frame, text="撤销", command=self.undo_image)
         self.undo_button.pack(side=tk.TOP, padx=5, pady=5)
 
     # ... (之前的其他方法)
