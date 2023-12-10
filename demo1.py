@@ -27,9 +27,14 @@ class ImageProcessorApp:
         # 创建显示图片的画布
         self.canvas = tk.Canvas(self.image_frame, width=400, height=400)
         self.canvas.pack(side=tk.TOP)
+        self.image_target_label = tk.Label(self.image_frame, text="目标图")
+        self.image_target_label.pack(side=tk.TOP)
 
+        # 原始图片的画布
         self.canvas1 = tk.Canvas(self.image_frame, width=400, height=400)
         self.canvas1.pack(side=tk.TOP)
+        self.image_init_label = tk.Label(self.image_frame, text="原图")
+        self.image_init_label.pack(side=tk.TOP)
 
         # 创建用于显示图片路径的Label
         self.image_path_label = tk.Label(self.image_frame, text="当前图片路径：")
@@ -54,12 +59,11 @@ class ImageProcessorApp:
         self.contrast_scale.set(100)
         self.contrast_scale.pack(side=tk.TOP)
 
-
-
         # 创建亮度调整控件
         self.brightness_label = tk.Label(self.button_frame, text="亮度调整（实时）")
         self.brightness_label.pack(side=tk.TOP)
-        self.brightness_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,command=self.adjust_brightness)
+        self.brightness_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
+                                      command=self.adjust_brightness)
         self.brightness_scale.set(100)
         self.brightness_scale.pack(side=tk.TOP)
 
@@ -88,7 +92,7 @@ class ImageProcessorApp:
         if file_path:
             # 打开并调整图片大小以适应画布
             self.image = Image.open(file_path)
-            self.init_img=self.image
+            self.init_img = self.image
             self.adjust_image_size()
             self.display_image()
 
@@ -107,6 +111,7 @@ class ImageProcessorApp:
             self.image = self.image_stack[-1].copy()
             # 显示图像
             self.display_image()
+
     def adjust_image_size(self):
         # 调整图片大小以适应画布并保持其纵横比
         canvas_width = 400
@@ -186,28 +191,7 @@ class ImageProcessorApp:
             self.image = rotated_image
             self.display_image()
 
-    def adjust_brightness(self):
-        # 调整亮度功能
-        if hasattr(self, 'image'):
-            print("hello")
-            brightness_factor = self.brightness_scale.get() / 100.0
-            brightness_adjusted = ImageEnhance.Brightness(self.image).enhance(brightness_factor)
 
-            # 显示调整亮度后的图片
-            self.image = brightness_adjusted
-            self.display_image()
-
-    def adjust_contrast(self):
-        # 调整对比度功能
-        if hasattr(self, 'image'):
-            print("hello")
-
-            contrast_factor = self.contrast_scale.get() / 100.0
-            contrast_adjusted = ImageEnhance.Contrast(self.image).enhance(contrast_factor)
-
-            # 显示调整对比度后的图片
-            self.image = contrast_adjusted
-            self.display_image()
 
     def rotate_image(self):
         # 旋转图片功能
@@ -234,7 +218,7 @@ class ImageProcessorApp:
         # 调整对比度功能
         if hasattr(self, 'image'):
             contrast_factor = self.contrast_scale.get() / 100.0
-            contrast_adjusted = ImageEnhance.Contrast(self.image).enhance(contrast_factor)
+            contrast_adjusted = ImageEnhance.Contrast(self.init_img).enhance(contrast_factor)
 
             # 显示调整对比度后的图片
             self.image = contrast_adjusted
