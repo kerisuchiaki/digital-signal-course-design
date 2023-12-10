@@ -68,7 +68,7 @@ class ImageProcessorApp:
         self.brightness_scale.pack(side=tk.TOP)
 
         # 创建对比度调整控件
-        self.contrast_label = tk.Label(self.button_frame, text="对比度调整（）")
+        self.contrast_label = tk.Label(self.button_frame, text="对比度调整（实时）")
         self.contrast_label.pack(side=tk.TOP)
         self.contrast_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
                                     command=self.adjust_contrast)
@@ -184,7 +184,7 @@ class ImageProcessorApp:
     def rotate_image(self):
         # 旋转图片功能
         if hasattr(self, 'image'):
-            rotation_angle = 45
+            rotation_angle = 90
             rotated_image = self.image.rotate(rotation_angle, expand=True)
 
             # 显示旋转后的图片
@@ -192,16 +192,6 @@ class ImageProcessorApp:
             self.display_image()
 
 
-
-    def rotate_image(self):
-        # 旋转图片功能
-        if hasattr(self, 'image'):
-            rotation_angle = 45
-            rotated_image = self.image.rotate(rotation_angle, expand=True)
-
-            # 显示旋转后的图片
-            self.image = rotated_image
-            self.display_image()
 
     def adjust_brightness(self, event=None):
         # 调整亮度功能
