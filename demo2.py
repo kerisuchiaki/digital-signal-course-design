@@ -1,27 +1,29 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, Scale, IntVar
-
-import cv2
-import numpy as np
-from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageDraw, ImageFont
-
+from tkinter import ttk, Scale, IntVar
+from PIL import Image, ImageTk, ImageDraw
 
 class ImageProcessorApp:
     def __init__(self, root):
+        # ... （之前的初始化代码）
         self.light_sense_scale = None
         self.root = root
         self.root.title("图像处理程序")
-
-        # 创建一个Frame用于放置按钮
-        self.button_frame = ttk.Frame(self.root)
-        self.button_frame.pack(side=tk.LEFT, padx=5, pady=5)
 
         # 创建一个Frame用于放置图片
         self.image_frame = ttk.Frame(self.root)
         self.image_frame.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.ProgressBar_frame = ttk.Frame(self.root)
-        self.ProgressBar_frame.pack(side=tk.LEFT, padx=5, pady=5)
+        # 创建一个Frame用于放置按钮
+        self.button_frame = ttk.Frame(self.root)
+        self.button_frame.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # 创建加载图片按钮
+        self.load_button = ttk.Button(self.button_frame, text="加载图片", command=self.load_image)
+        self.load_button.pack(side=tk.TOP, padx=5, pady=5)
+
+        # 创建处理图片按钮
+        self.process_button = ttk.Button(self.button_frame, text="处理图片", command=self.process_image)
+        self.process_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建显示图片的画布
         self.canvas = tk.Canvas(self.image_frame, width=400, height=400)
@@ -35,17 +37,10 @@ class ImageProcessorApp:
         self.image_init_label = tk.Label(self.image_frame, text="原图")
         self.image_init_label.pack(side=tk.TOP)
 
+        # ... （之前的其他初始化代码）
         # 创建用于显示图片路径的Label
         self.image_path_label = tk.Label(self.image_frame, text="当前图片路径：")
         self.image_path_label.pack(side=tk.TOP, padx=5, pady=5)
-
-        # 创建加载图片按钮
-        self.load_button = ttk.Button(self.button_frame, text="加载图片", command=self.load_image)
-        self.load_button.pack(side=tk.TOP, padx=5, pady=5)
-
-        # 创建处理图片按钮
-        self.process_button = ttk.Button(self.button_frame, text="处理图片", command=self.process_image)
-        self.process_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建功能按钮
         self.crop_button = ttk.Button(self.button_frame, text="裁剪", command=self.crop_image)
@@ -53,16 +48,6 @@ class ImageProcessorApp:
 
         self.rotate_button = ttk.Button(self.button_frame, text="旋转", command=self.rotate_image)
         self.rotate_button.pack(side=tk.TOP, padx=5, pady=5)
-
-        # 创建HSL、锐化、平滑按钮
-        self.hsl_button = ttk.Button(self.button_frame, text="HSL调整", command=self.adjust_hsl)
-        self.hsl_button.pack(side=tk.TOP, padx=5, pady=5)
-
-        self.sharpen_button = ttk.Button(self.button_frame, text="锐化", command=self.sharpen)
-        self.sharpen_button.pack(side=tk.TOP, padx=5, pady=5)
-
-        self.smooth_button = ttk.Button(self.button_frame, text="平滑", command=self.smooth)
-        self.smooth_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # self.brightness_label = tk.Label(self.button_frame, text="亮度调整")
         # self.brightness_label.pack(side=tk.TOP)
@@ -76,92 +61,21 @@ class ImageProcessorApp:
         # self.contrast_scale.set(100)
         # self.contrast_scale.pack(side=tk.TOP)
 
-        # 创建亮度调整控件
-        self.brightness_label = tk.Label(self.ProgressBar_frame, text="亮度调整（实时）")
-        self.brightness_label.pack(side=tk.TOP)
-        self.brightness_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                      command=self.adjust_brightness)
-        self.brightness_scale.set(100)
-        self.brightness_scale.pack(side=tk.TOP)
+        # 创建亮度、对比度、光感、曝光度、直方图均衡化、饱和度、曲线调色等调整控件
+        self.create_adjustment_controls()
 
-        # 创建对比度调整控件
-        self.contrast_label = tk.Label(self.ProgressBar_frame, text="对比度调整（实时）")
-        self.contrast_label.pack(side=tk.TOP)
-        self.contrast_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                    command=self.adjust_contrast)
-        self.contrast_scale.set(100)
-        self.contrast_scale.pack(side=tk.TOP)
-
-        # 创建光感调节控件
-        self.light_sense_label = tk.Label(self.ProgressBar_frame, text="光感调节（实时）")
-        self.light_sense_label.pack(side=tk.TOP)
-        self.light_sense_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                       command=self.adjust_light_sense)
-        self.light_sense_scale.set(100)
-        self.light_sense_scale.pack(side=tk.TOP)
-
-        # 创建曝光度调整控件
-        self.exposure_label = tk.Label(self.ProgressBar_frame, text="曝光度调整（实时）")
-        self.exposure_label.pack(side=tk.TOP)
-        self.exposure_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                    command=self.adjust_exposure)
-        self.exposure_scale.set(100)
-        self.exposure_scale.pack(side=tk.TOP)
-
-        self.equalize_label = tk.Label(self.ProgressBar_frame, text="直方图均衡化（实时）")
-        self.equalize_label.pack(side=tk.TOP)
-        self.equalize_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                    command=self.adjust_equalize)
-        self.equalize_scale.set(100)
-        self.equalize_scale.pack(side=tk.TOP)
-
-        # 创建饱和度调整控件
-        self.saturation_label = tk.Label(self.ProgressBar_frame, text="饱和度调整（实时）")
-        self.saturation_label.pack(side=tk.TOP)
-        self.saturation_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                      command=self.adjust_saturation)
-        self.saturation_scale.set(100)
-        self.saturation_scale.pack(side=tk.TOP)
-
-        # 创建曲线调色控件
-        self.curve_color_label = tk.Label(self.ProgressBar_frame, text="曲线调色（实时）")
-        self.curve_color_label.pack(side=tk.TOP)
-        self.curve_color_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                       command=self.adjust_curve_color)
-        self.curve_color_scale.set(100)
-        self.curve_color_scale.pack(side=tk.TOP)
-
-        self.image_stack = []  # 用于保存图像状态的堆栈
-
-        # ... (之前的初始化代码)
+        # 创建HSL、锐化、平滑按钮
+        self.create_image_processing_buttons()
 
         # 创建撤销按钮
         self.undo_button = ttk.Button(self.button_frame, text="撤销", command=self.undo_image)
         self.undo_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建曲线调整控件
-        self.curve_label = tk.Label(self.ProgressBar_frame, text="曲线调整（实时）")
-        self.curve_label.pack(side=tk.TOP)
-        self.curve_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                 command=self.adjust_curve)
-        self.curve_scale.set(100)
-        self.curve_scale.pack(side=tk.TOP)
+        self.create_curve_adjustment_controls()
 
-        # 创建色温调整控件
-        self.temperature_label = tk.Label(self.ProgressBar_frame, text="色温调整（实时）")
-        self.temperature_label.pack(side=tk.TOP)
-        self.temperature_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                       command=self.adjust_temperature)
-        self.temperature_scale.set(100)
-        self.temperature_scale.pack(side=tk.TOP)
-
-        # 创建色调调整控件
-        self.hue_label = tk.Label(self.ProgressBar_frame, text="色调调整（实时）")
-        self.hue_label.pack(side=tk.TOP)
-        self.hue_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                               command=self.adjust_hue)
-        self.hue_scale.set(100)
-        self.hue_scale.pack(side=tk.TOP)
+        # 创建色温、色调调整控件
+        self.create_temperature_and_hue_controls()
 
         # 创建文字输入框和按钮
         self.text_entry = ttk.Entry(self.button_frame)
@@ -169,13 +83,56 @@ class ImageProcessorApp:
         self.add_text_button = ttk.Button(self.button_frame, text="添加文字", command=self.add_text_to_image)
         self.add_text_button.pack(side=tk.TOP, pady=5)
 
-        # 创建水印输入框和按钮
-        self.watermark_entry = ttk.Entry(self.button_frame)
-        self.watermark_entry.pack(side=tk.TOP, pady=5)
-        self.add_watermark_button = ttk.Button(self.button_frame, text="添加水印", command=self.add_watermark_to_image)
-        self.add_watermark_button.pack(side=tk.TOP, pady=5)
+    def create_adjustment_controls(self):
+        # 创建亮度调整控件
+        self.create_scale_control("亮度", self.adjust_brightness)
 
-    # ... (之前的其他方法)
+        # 创建对比度调整控件
+        self.create_scale_control("对比度", self.adjust_contrast)
+
+        # 创建光感调节控件
+        self.create_scale_control("光感", self.adjust_light_sense)
+
+        # 创建曝光度调整控件
+        self.create_scale_control("曝光度", self.adjust_exposure)
+
+        # 创建直方图均衡化控件
+        self.create_scale_control("直方图均衡化", self.adjust_equalize)
+
+        # 创建饱和度调整控件
+        self.create_scale_control("饱和度", self.adjust_saturation)
+
+        # 创建曲线调色控件
+        self.create_scale_control("曲线调色", self.adjust_curve_color)
+
+    def create_image_processing_buttons(self):
+        # 创建HSL、锐化、平滑按钮
+        self.hsl_button = ttk.Button(self.button_frame, text="HSL调整", command=self.adjust_hsl)
+        self.hsl_button.pack(side=tk.TOP, padx=5, pady=5)
+
+        self.sharpen_button = ttk.Button(self.button_frame, text="锐化", command=self.sharpen)
+        self.sharpen_button.pack(side=tk.TOP, padx=5, pady=5)
+
+        self.smooth_button = ttk.Button(self.button_frame, text="平滑", command=self.smooth)
+        self.smooth_button.pack(side=tk.TOP, padx=5, pady=5)
+
+    def create_curve_adjustment_controls(self):
+        # 创建曲线调整控件
+        self.create_scale_control("曲线调整", self.adjust_curve)
+
+    def create_temperature_and_hue_controls(self):
+        # 创建色温调整控件
+        self.create_scale_control("色温调整", self.adjust_temperature)
+
+        # 创建色调调整控件
+        self.create_scale_control("色调调整", self.adjust_hue)
+
+    def create_scale_control(self, label_text, command):
+        scale_label = tk.Label(self.button_frame, text=f"{label_text}（实时）")
+        scale_label.pack(side=tk.TOP)
+        scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200, command=command)
+        scale.set(100)
+        scale.pack(side=tk.TOP)
 
     def load_image(self):
         # 弹出文件选择对话框
@@ -218,9 +175,7 @@ class ImageProcessorApp:
             new_height = canvas_height
             new_width = int(canvas_height * aspect_ratio)
 
-        # self.image = self.image.resize((new_width, new_height), Image.ANTIALIAS)
-
-        self.image = self.image.resize((new_width, new_height), Image.LANCZOS)
+        self.image = self.image.resize((new_width, new_height), Image.ANTIALIAS)
 
         width1, height1 = self.init_img.size
         aspect_ratio1 = width1 / height1
@@ -232,8 +187,7 @@ class ImageProcessorApp:
             new_height1 = canvas_height
             new_width1 = int(canvas_height * aspect_ratio1)
 
-        # self.init_img = self.image.resize((new_width1, new_height1), Image.ANTIALIAS)
-        self.init_img = self.image.resize((new_width1, new_height1), Image.LANCZOS)
+        self.init_img = self.image.resize((new_width1, new_height1), Image.ANTIALIAS)
 
     def process_image(self):
         # 处理图片的默认功能
@@ -583,64 +537,6 @@ class ImageProcessorApp:
 
                 # 显示带有文本的图片
                 self.display_image()
-
-    def add_watermark_to_image(self):
-        # 获取水印文本
-        watermark_text = self.watermark_entry.get()
-
-        if watermark_text:
-            # 获取当前显示图像的路径并去除前缀
-            current_image_path = self.image_path_label["text"].replace('当前图片路径：', '')
-
-            # 生成保存水印图像的路径
-            output_image_path = current_image_path.replace(".jpg", "_with_watermark.jpg")
-
-            # 添加水印
-            add_watermark(current_image_path, output_image_path, watermark_text)
-
-            # 更新图像显示
-            self.show_image(output_image_path)
-
-    def show_image(self, image_path):
-        # 打开图像并在画布上显示
-        image = Image.open(image_path)
-        photo = ImageTk.PhotoImage(image)
-        self.canvas.delete("all")
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
-        self.canvas.image = photo  # 保持引用以避免被垃圾回收
-
-
-# 添加水印的函数（与之前提供的相同）
-def add_watermark(input_image_path, output_image_path, watermark_text):
-    original_image = Image.open(input_image_path)
-
-    # 创建一个绘图对象
-    draw = ImageDraw.Draw(original_image)
-
-    # 获取水印文本的包围框
-    font = ImageFont.load_default()  # 使用默认字体
-    text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
-
-    # 计算水印文本的宽度和高度
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
-
-    # 计算水印文本的位置
-    text_position = (original_image.width - text_width, original_image.height - text_height)
-
-    # 在图片上绘制水印
-    draw.text(text_position, watermark_text, font=font)
-
-    # 保存带有水印的图片
-    original_image.save(output_image_path)
-
-
-
-
-# 你的 HSL 转 RGB 函数
-# ...
-
-# 其他部分保持不变
 
 if __name__ == "__main__":
     root = tk.Tk()
