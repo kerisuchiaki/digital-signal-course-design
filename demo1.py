@@ -108,12 +108,8 @@ class ImageProcessorApp:
         self.exposure_scale.set(100)
         self.exposure_scale.pack(side=tk.TOP)
 
-        self.equalize_label = tk.Label(self.ProgressBar_frame, text="直方图均衡化（实时）")
-        self.equalize_label.pack(side=tk.TOP)
-        self.equalize_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
-                                    command=self.adjust_equalize)
-        self.equalize_scale.set(100)
-        self.equalize_scale.pack(side=tk.TOP)
+        self.equalize_button = ttk.Button(self.button_frame, text="直方图均衡化", command=self.adjust_equalize)
+        self.equalize_button.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建饱和度调整控件
         self.saturation_label = tk.Label(self.ProgressBar_frame, text="饱和度调整（实时）")
@@ -354,10 +350,9 @@ class ImageProcessorApp:
             self.image = curve_adjusted
             self.display_image()
 
-    def adjust_equalize(self, event=None):
+    def adjust_equalize(self):
         # 直方图均衡化功能
         if hasattr(self, 'image'):
-            equalize_factor = self.equalize_scale.get() / 100.0
             equalize_adjusted = ImageOps.equalize(self.init_img)
             self.image = equalize_adjusted
             self.display_image()
@@ -633,8 +628,6 @@ def add_watermark(input_image_path, output_image_path, watermark_text):
 
     # 保存带有水印的图片
     original_image.save(output_image_path)
-
-
 
 
 # 你的 HSL 转 RGB 函数
