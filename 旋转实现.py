@@ -19,6 +19,8 @@ for row in range(img.shape[0]):
 x = x - x.min()
 y = y - y.min()
 
+# 这和pycharm显示是png图像，但是后缀是jpg有关吗
+
 dst = np.zeros((int(y.max()) + 1, int(x.max()) + 1), dtype=np.uint8)
 flag = np.zeros_like(dst, dtype=np.uint8)
 

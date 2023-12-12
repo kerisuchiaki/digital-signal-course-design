@@ -171,6 +171,10 @@ class ImageProcessorApp:
         self.add_watermark_button = ttk.Button(self.button_frame, text="添加水印", command=self.add_watermark_to_image)
         self.add_watermark_button.pack(side=tk.TOP, pady=5)
 
+
+
+
+
     # ... (之前的其他方法)
 
     def load_image(self):
