@@ -64,18 +64,6 @@ class ImageProcessorApp:
         self.smooth_button = ttk.Button(self.button_frame, text="平滑", command=self.smooth)
         self.smooth_button.pack(side=tk.TOP, padx=5, pady=5)
 
-        # self.brightness_label = tk.Label(self.button_frame, text="亮度调整")
-        # self.brightness_label.pack(side=tk.TOP)
-        # self.brightness_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200)
-        # self.brightness_scale.set(100)
-        # self.brightness_scale.pack(side=tk.TOP)
-        #
-        # self.contrast_label = tk.Label(self.button_frame, text="对比度调整")
-        # self.contrast_label.pack(side=tk.TOP)
-        # self.contrast_scale = Scale(self.button_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200)
-        # self.contrast_scale.set(100)
-        # self.contrast_scale.pack(side=tk.TOP)
-
         # 创建亮度调整控件
         self.brightness_label = tk.Label(self.ProgressBar_frame, text="亮度调整（实时）")
         self.brightness_label.pack(side=tk.TOP)
@@ -128,8 +116,6 @@ class ImageProcessorApp:
         self.curve_color_scale.pack(side=tk.TOP)
 
         self.image_stack = []  # 用于保存图像状态的堆栈
-
-        # ... (之前的初始化代码)
 
         # 创建撤销按钮
         self.undo_button = ttk.Button(self.button_frame, text="撤销", command=self.undo_image)

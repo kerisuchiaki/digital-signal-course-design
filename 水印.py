@@ -1,13 +1,24 @@
-import PIL.Image
-import scipy.misc
+from PIL import Image, ImageFilter
 
-if _name_ == 'main':
-    im = scipy.misc.imread('/image/shuiyin.jpg', mode='RGBA')
-    im_water = scipy.misc.imread('./image/miku.jpg', mode='RGBA')
 
-for x in range(im_water.shape[0]):
-    for y in range(im_water.shape[1]):
-        a = 0.3 * im_water[x][y][-1] / 255
-        im[x][y][0:3] = (1 - a) * im[x][y][0:3] + a * im_water[x][y][0:3]
+def add_visible_watermark(background_path, watermark_path, output_path, alpha=0.9):
+    # 打开背景图和水印图
+    background = Image.open(background_path).convert('RGBA')
+    watermark = Image.open(watermark_path).convert('RGBA')
 
-PIL.Image.fromarray(im).show()
+    # 调整水印大小以适应背景图
+    watermark = watermark.resize(background.size, Image.LANCZOS)
+
+    # 将水印叠加到背景图上
+    result = Image.blend(background, watermark, alpha)
+
+    # 保存结果
+    result.save(output_path, format='PNG')
+
+
+# 使用示例
+background_image_path = './image/img2.jpg'
+watermark_image_path = './image/miku.jpg'
+output_image_path = 'C:/Users/minamichiaki/Desktop/output.png'
+
+add_visible_watermark(background_image_path, watermark_image_path, output_image_path)

@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageDraw, ImageFont
 
+from demo1 import add_watermark
+
 
 class ImageProcessorApp:
     def __init__(self, root):
@@ -28,8 +30,11 @@ class ImageProcessorApp:
         self.image_frame = ttk.Frame(self.root)
         self.image_frame.pack(side=tk.LEFT, padx=5, pady=5)
 
+        # 创建一个Frame用来防止滑块
         self.ProgressBar_frame = ttk.Frame(self.root)
         self.ProgressBar_frame.pack(side=tk.LEFT, padx=5, pady=5)
+
+
 
         # 创建显示图片的画布
         self.canvas = tk.Canvas(self.image_frame, width=400, height=400)
@@ -69,6 +74,26 @@ class ImageProcessorApp:
         self.smooth_button = ttk.Button(self.button_frame, text="平滑", command=self.smooth)
         self.smooth_button.pack(side=tk.TOP, padx=5, pady=5)
 
+        self.equalize_button = ttk.Button(self.button_frame, text="直方图均衡化", command=self.adjust_equalize)
+        self.equalize_button.pack(side=tk.TOP, padx=5, pady=5)
+
+        # 创建HSL、锐化、平滑按钮
+        self.hsl_button = ttk.Button(self.button_frame, text="HSL调整")
+        self.hsl_button.pack(side=tk.TOP, padx=5, pady=5)
+
+
+        # 创建文字输入框和按钮
+        self.text_entry = ttk.Entry(self.button_frame)
+        self.text_entry.pack(side=tk.TOP, pady=5)
+        self.add_text_button = ttk.Button(self.button_frame, text="添加文字", command=self.add_text_to_image)
+        self.add_text_button.pack(side=tk.TOP, pady=5)
+
+        # 创建水印输入框和按钮
+        self.watermark_entry = ttk.Entry(self.button_frame)
+        self.watermark_entry.pack(side=tk.TOP, pady=5)
+        self.add_watermark_button = ttk.Button(self.button_frame, text="添加水印", command=self.add_watermark_to_image)
+        self.add_watermark_button.pack(side=tk.TOP, pady=5)
+
         # 创建亮度调整控件
         self.brightness_label = tk.Label(self.ProgressBar_frame, text="亮度调整（实时）")
         self.brightness_label.pack(side=tk.TOP)
@@ -82,7 +107,7 @@ class ImageProcessorApp:
         self.contrast_label.pack(side=tk.TOP)
         self.contrast_scale = Scale(self.ProgressBar_frame, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
                                     command=self.adjust_contrast)
-        self.contrast_scale.set(100)
+        # self.contrast_scale.set(100)
         self.contrast_scale.pack(side=tk.TOP)
 
         self.image_stack = []  # 用于保存图像状态的堆栈
@@ -105,6 +130,31 @@ class ImageProcessorApp:
         self.save_button = ttk.Button(self.button_frame, text="保存图片", command=self.save_image)
         self.save_button.pack(side=tk.TOP, padx=5, pady=5)
 
+
+    def add_watermark_to_image(self):
+        # 获取水印文本
+        watermark_text = self.watermark_entry.get()
+
+        if watermark_text:
+            # 获取当前显示图像的路径并去除前缀
+            current_image_path = self.image_path_label["text"].replace('当前图片路径：', '')
+
+            # 生成保存水印图像的路径
+            output_image_path = current_image_path.replace(".jpg", "_with_watermark.jpg")
+
+            # 添加水印
+            add_watermark(current_image_path, output_image_path, watermark_text)
+
+            # 更新图像显示
+            self.show_image(output_image_path)
+
+    def adjust_equalize(self):
+        # 直方图均衡化功能
+        if hasattr(self, 'image'):
+            equalize_adjusted = ImageOps.equalize(self.image)
+            self.image = equalize_adjusted
+            self.display_image()
+
     def cancel_process(self):
         if hasattr(self, 'init_img'):
             self.image = self.init_img
@@ -117,6 +167,7 @@ class ImageProcessorApp:
 
         if file_path:
             # 打开并调整图片大小以适应画布
+            self.image_stack = []
             self.image = Image.open(file_path)
             self.init_img = self.image  # 这里这样写也能保持原图不变奇怪
             self.adjust_image_size()
@@ -245,7 +296,6 @@ class ImageProcessorApp:
             # 获取当前函数的名称
             self.last_op = inspect.currentframe().f_code.co_name
 
-
     def sharpen(self):
         if hasattr(self, 'image'):
             # Convert to OpenCV format
@@ -261,6 +311,7 @@ class ImageProcessorApp:
             # Convert back to PIL format
             self.image = Image.fromarray(cv2.cvtColor(sharpened_img, cv2.COLOR_BGR2RGB))
 
+            self.display_image(1)
 
     def smooth(self):
         if hasattr(self, 'image'):
@@ -276,7 +327,6 @@ class ImageProcessorApp:
             self.display_image()
             # 添加当前图像到堆栈
 
-
     def add_text_to_image(self):
         # 添加文本到图片
         if hasattr(self, 'image'):
@@ -289,7 +339,6 @@ class ImageProcessorApp:
 
                 # 显示带有文本的图片
                 self.display_image()
-
 
     def save_image(self):
         # 保存图片功能
@@ -304,8 +353,18 @@ class ImageProcessorApp:
                 # 保存图片
                 self.image.save(file_path)
 
+    def show_image(self, image_path):
+        # 打开图像并在画布上显示
+        image = Image.open(image_path)
+        photo = ImageTk.PhotoImage(image)
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+        self.canvas.image = photo  # 保持引用以避免被垃圾回收
+
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = ImageProcessorApp(root)
     root.mainloop()
+
+    在之前的代码增加这个功能
