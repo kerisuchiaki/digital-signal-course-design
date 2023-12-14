@@ -9,14 +9,18 @@ from tkinter import filedialog
 # from tkinter.ttk import *
 # del Scale
 import tkinter as tk
-from tkinter.ttk import Notebook
+from tkinter.ttk import Notebook, Button
 
-from PIL import Image, ImageTk, ImageEnhance
+import cv2
+import numpy as np
+from PIL import Image, ImageTk, ImageEnhance, ImageOps
 
 
 class WinGUI(Tk):
     def __init__(self):
         super().__init__()
+        self.image_back = None
+        self.image_back_last = None
         self.__win()
         self.tk_button_open_image = self.__tk_button_open_image(self)
         self.tk_button_cancel = self.__tk_button_cancel(self)
@@ -24,27 +28,26 @@ class WinGUI(Tk):
         self.tk_button_save = self.__tk_button_save(self)
         self.tk_tabs_option = self.__tk_tabs_option(self)
         self.tk_frame_container0 = self.__tk_frame_container0(self.tk_tabs_option_1)
-        self.tk_scale_slider1 = self.__tk_scale_slider1(self.tk_frame_container0)
-        # self.tk_scale_slider1 =
-        self.tk_label_brightness = self.__tk_label_brightness(self.tk_frame_container0)
-        self.tk_scale_slider2 = self.__tk_scale_slider2(self.tk_frame_container0)
+        self.tk_label_contrast = self.__tk_label_contrast(self.tk_frame_container0)  # 对比度
+        self.tk_scale_contrast = self.__tk_scale_contrast(self.tk_frame_container0)
+        self.tk_label_brightness = self.__tk_label_brightness(self.tk_frame_container0)  # 亮度
+        self.tk_scale_brightness = self.__tk_scale_brightness(self.tk_frame_container0)
         self.tk_label_exposure = self.__tk_label_exposure(self.tk_frame_container0)
         self.tk_scale_slider3 = self.__tk_scale_slider3(self.tk_frame_container0)
         self.tk_label_pome = self.__tk_label_pome(self.tk_frame_container0)
         self.tk_scale_slider4 = self.__tk_scale_slider4(self.tk_frame_container0)
-        self.tk_button_Sharpen = self.__tk_button_Sharpen(self.tk_frame_container0)
-        self.tk_button_Smooth = self.__tk_button_Smooth(self.tk_frame_container0)
+        self.tk_button_Sharpen = self.__tk_button_Sharpen(self.tk_frame_container0)  # 锐化，考虑做成滑块
+        self.tk_button_Smooth = self.__tk_button_Smooth(self.tk_frame_container0)  # 平滑，同上
         self.tk_button_Histogram_equalization = self.__tk_button_Histogram_equalization(self.tk_frame_container0)
         self.tk_label_saturation = self.__tk_label_saturation(self.tk_frame_container0)
         self.tk_scale_slider5 = self.__tk_scale_slider5(self.tk_frame_container0)
-        self.tk_label_contrast = self.__tk_label_contrast(self.tk_frame_container0)
         self.tk_frame_container1 = self.__tk_frame_container1(self.tk_tabs_option_2)
-        self.tk_scale_Saturation = self.__tk_scale_Saturation(self.tk_frame_container1)
         self.tk_label_Hue = self.__tk_label_Hue(self.tk_frame_container1)
-        self.tk_scale_slider6 = self.__tk_scale_slider6(self.tk_frame_container1)
+        self.tk_scale_Hue = self.__tk_scale_Hue(self.tk_frame_container1)
         self.tk_label_Saturation = self.__tk_label_Saturation(self.tk_frame_container1)
-        self.tk_scale_slider7 = self.__tk_scale_slider7(self.tk_frame_container1)
+        self.tk_scale_Saturation = self.__tk_scale_Saturation(self.tk_frame_container1)
         self.tk_label_lightness = self.__tk_label_lightness(self.tk_frame_container1)
+        self.tk_scale_lightness = self.__tk_scale_lightness(self.tk_frame_container1)
         self.tk_button_rotate = self.__tk_button_rotate(self.tk_tabs_option_0)
         self.tk_button_trim = self.__tk_button_trim(self.tk_tabs_option_0)
         self.tk_input_text = self.__tk_input_text(self.tk_tabs_option_3)
@@ -63,18 +66,26 @@ class WinGUI(Tk):
             # 打开并调整图片大小以适应画布
             self.image_stack = []
             self.image = Image.open(file_path)
-            self.init_img = self.image.copy()  # 保持原图不变
             self.adjust_image_size()
-            self.image_stack.append(self.image.copy())
+            self.init_img = self.image  # 保持原图不变
+            self.image_stack.append(self.image)
             self.show_image()
 
-    def show_image(self, flag=0):
-        # 显示调整后的图片
-        if flag == 0:
-            self.image_back = self.image
-        self.photo = ImageTk.PhotoImage(self.image)
-        self.init_photo = ImageTk.PhotoImage(self.init_img)
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
+    def show_image(self, evt=None, flag=0, refresh=0):
+        print("sqa")
+        if hasattr(self, 'image_back') and hasattr(self, 'image'):
+            # 清除之前的内容
+            self.canvas.delete("all")
+            # 显示调整后的图片
+            if flag == 0:
+                self.image_back = self.image
+                print("000000000000")
+            if refresh == 1:
+                self.photo = ImageTk.PhotoImage(self.image_back)
+                print("bug")
+            else:
+                self.photo = ImageTk.PhotoImage(self.image)
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def adjust_image_size(self):
         # 获取画布的大小
@@ -96,7 +107,7 @@ class WinGUI(Tk):
         self.image.thumbnail((new_width, new_height), Image.LANCZOS)
 
     def __win(self):
-        self.title("Tkinter布局助手")
+        self.title("Tkinter")
         # 设置窗口大小、居中
         width = 1360
         height = 681
@@ -162,7 +173,7 @@ class WinGUI(Tk):
         return btn
 
     def __tk_button_save(self, parent):
-        btn = Button(parent, text="保存", takefocus=False, )
+        btn = Button(parent, text="保存", takefocus=False,)
         btn.place(x=234, y=1, width=50, height=30)
         return btn
 
@@ -204,8 +215,7 @@ class WinGUI(Tk):
         frame.place(x=0, y=0, width=349, height=480)
         return frame
 
-    def __tk_scale_slider1(self, parent):
-        # scale = Scale(parent, orient=HORIZONTAL, )
+    def __tk_scale_contrast(self, parent):
         scale = Scale(parent, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
                       )
         scale.set(100)
@@ -217,9 +227,12 @@ class WinGUI(Tk):
         label.place(x=26, y=82, width=87, height=30)
         return label
 
-    def __tk_scale_slider2(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=0, y=125, width=150, height=30)
+    def __tk_scale_brightness(self, parent):
+        scale = Scale(parent, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
+                      )
+        scale = Scale(parent, from_=0, to=200, orient=HORIZONTAL, length=200, )
+        scale.place(x=0, y=125, width=150, height=50)
+        scale.set(100)
         return scale
 
     def __tk_label_exposure(self, parent):
@@ -229,7 +242,7 @@ class WinGUI(Tk):
 
     def __tk_scale_slider3(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=0, y=231, width=150, height=30)
+        scale.place(x=0, y=231, width=150, height=50)
         return scale
 
     def __tk_label_pome(self, parent):
@@ -239,7 +252,7 @@ class WinGUI(Tk):
 
     def __tk_scale_slider4(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=0, y=329, width=150, height=30)
+        scale.place(x=0, y=309, width=150, height=50)
         return scale
 
     def __tk_button_Sharpen(self, parent):
@@ -264,7 +277,7 @@ class WinGUI(Tk):
 
     def __tk_scale_slider5(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=0, y=452, width=150, height=30)
+        scale.place(x=0, y=412, width=150, height=50)
         return scale
 
     def __tk_label_contrast(self, parent):
@@ -279,7 +292,7 @@ class WinGUI(Tk):
 
     def __tk_scale_Saturation(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=13, y=342, width=150, height=30)
+        scale.place(x=13, y=342, width=150, height=50)
         return scale
 
     def __tk_label_Hue(self, parent):
@@ -287,9 +300,9 @@ class WinGUI(Tk):
         label.place(x=62, y=0, width=50, height=30)
         return label
 
-    def __tk_scale_slider6(self, parent):
+    def __tk_scale_Hue(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=13, y=56, width=143, height=30)
+        scale.place(x=13, y=56, width=143, height=50)
         return scale
 
     def __tk_label_Saturation(self, parent):
@@ -297,14 +310,14 @@ class WinGUI(Tk):
         label.place(x=62, y=127, width=50, height=30)
         return label
 
-    def __tk_scale_slider7(self, parent):
+    def __tk_scale_lightness(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=11, y=189, width=150, height=30)
+        scale.place(x=11, y=189, width=150, height=50)
         return scale
 
     def __tk_label_lightness(self, parent):
         label = Label(parent, text="L", anchor="center", )
-        label.place(x=64, y=271, width=50, height=30)
+        label.place(x=64, y=251, width=50, height=50)
         return label
 
     def __tk_button_rotate(self, parent):
@@ -363,7 +376,7 @@ class Win(WinGUI):
     def create_menu(self):
         menu = Menu(self, tearoff=False)
         menu.add_cascade(label="文件", menu=self.menu_lq4uzrg8(menu))
-        menu.add_command(label="撤销", command=self.cancel)
+        menu.add_command(label="撤销", command=self.undo_image)
         menu.add_command(label="反撤销", command=self.uncancel)
         menu.add_command(label="重做", command=self.init_image)
         menu.add_command(label="关于", command=self.about_me)
@@ -383,16 +396,28 @@ class Win(WinGUI):
             # 打开并调整图片大小以适应画布
             self.image_stack = []
             self.image = Image.open(file_path)
-            self.init_img = self.image.copy()  # 保持原图不变
             self.adjust_image_size()
-            self.image_stack.append(self.image.copy())
+            self.init_img = self.image  # 保持原图不变
+            self.image_stack.append(self.image)
             self.show_image()
 
     def save(self):
         print("点击了菜单")
 
-    def cancel(self):
-        print("点击了菜单")
+    def undo_image(self, evt=None):
+        if hasattr(self, 'image_stack') and self.image is not None:
+            # 撤销按钮的处理方法
+            if len(self.image_stack) >= 1:
+                # 弹出当前图像
+
+                # 恢复到上一个状态
+                self.image = self.image_stack[-1]
+
+                # 当只剩下最初的原图时不能再出栈了，不然后面入栈其他的再撤销会找不到原图的
+                if len(self.image_stack) > 1:
+                    self.image_stack.pop()
+                # 显示图像
+                self.show_image()
 
     def uncancel(self):
         print("点击了菜单")
@@ -403,24 +428,20 @@ class Win(WinGUI):
     def about_me(self):
         print("点击了菜单")
 
-        # def adjust_contrast(self, event=None):
-        #     if self.last_op != inspect.currentframe().f_code.co_name:
-        #         self.image_back = self.image
-
-        # 调整对比度功能
+    def adjust_brightness(self, evt=None):
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        # 调整亮度功能
         if hasattr(self, 'image_back') and self.image is not None:
-            contrast_factor = self.contrast_scale.get() / 100.0
-            # 在增强对比度之前检查 self.image 是否不为 None
-            contrast_adjusted = ImageEnhance.Contrast(self.image_back).enhance(contrast_factor)
+            brightness_factor = self.tk_scale_brightness.get() / 100.0
+            # 在增强亮度之前检查 self.image 是否不为 None
+            brightness_adjusted = ImageEnhance.Brightness(self.image_back).enhance(brightness_factor)
 
-            # 显示调整对比度后的图片
-            self.image = contrast_adjusted
-            self.display_image(1)
+            # 显示调整亮度后的图片
+            self.image = brightness_adjusted
+            self.show_image(flag=1)
             # 获取当前函数的名称
             self.last_op = inspect.currentframe().f_code.co_name
-
-    def adjust_brightness(self, evt):
-        print("<Configure>事件未处理:", evt)
 
     def adjust_exposure(self, evt):
         print("<Configure>事件未处理:", evt)
@@ -429,13 +450,31 @@ class Win(WinGUI):
         print("<Configure>事件未处理:", evt)
 
     def sharpen(self, evt):
-        print("<Button-1>事件未处理:", evt)
+        if hasattr(self, 'image'):
+            # Convert to OpenCV format
+            img_np = np.array(self.image)
+            img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+            # Apply sharpening filter
+            kernel = np.array([[-1, -1, -1],
+                               [-1, 9, -1],
+                               [-1, -1, -1]])
+            sharpened_img = cv2.filter2D(img_cv2, -1, kernel)
+
+            # Convert back to PIL format
+            self.image = Image.fromarray(cv2.cvtColor(sharpened_img, cv2.COLOR_BGR2RGB))
+
+            self.show_image(1)
 
     def smooth(self, evt):
         print("<Button-1>事件未处理:", evt)
 
     def adjust_equalize(self, evt):
-        print("<Button-1>事件未处理:", evt)
+        # 直方图均衡化功能
+        if hasattr(self, 'image'):
+            equalize_adjusted = ImageOps.equalize(self.image)
+            self.image = equalize_adjusted
+            self.show_image()
 
     def adjust_saturation(self, evt):
         print("<Configure>事件未处理:", evt)
@@ -457,7 +496,7 @@ class Win(WinGUI):
 
             # 显示旋转后的图片
             self.image = rotated_image
-            self.image_stack.append(self.image.copy())
+            self.image_stack.append(self.image)
             self.show_image()
 
     def crop_image(self, evt=None):
@@ -481,29 +520,13 @@ class Win(WinGUI):
 
         # 调整对比度功能
         if hasattr(self, 'image_back') and self.image is not None:
-            contrast_factor = self.tk_scale_slider1.get() / 100.0
+            contrast_factor = self.tk_scale_contrast.get() / 100.0
             # 在增强对比度之前检查 self.image 是否不为 None
             contrast_adjusted = ImageEnhance.Contrast(self.image_back).enhance(contrast_factor)
 
             # 显示调整对比度后的图片
             self.image = contrast_adjusted
-            self.show_image(1)
-            # 获取当前函数的名称
-            self.last_op = inspect.currentframe().f_code.co_name
-
-    def adjust_contrast(self, event=None):
-        if self.last_op != inspect.currentframe().f_code.co_name:
-            self.image_back = self.image
-
-        # 调整对比度功能
-        if hasattr(self, 'image_back') and self.image is not None:
-            contrast_factor = self.tk_scale_slider1.get() / 50.0  # Adjust the scaling factor
-            # 在增强对比度之前检查 self.image 是否不为 None
-            contrast_adjusted = ImageEnhance.Contrast(self.image_back).enhance(contrast_factor)
-
-            # 显示调整对比度后的图片
-            self.image = contrast_adjusted
-            self.show_image(1)
+            self.show_image(flag=1)
             # 获取当前函数的名称
             self.last_op = inspect.currentframe().f_code.co_name
 
@@ -513,13 +536,112 @@ class Win(WinGUI):
     def watermark(self, evt):
         print("<Button-1>事件未处理:", evt)
 
-    def hint(self, evt):
-        print("<Enter>事件未处理:", evt)
+    def enter(self, evt=None):
+        print("enter")
+        # 显示调整后的图片
+        if hasattr(self, 'init_img'):
+            self.init_img = self.image_stack[-1]
+            self.init_photo = ImageTk.PhotoImage(self.init_img)
+            self.canvas.delete("all")
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=self.init_photo)
+
+    def refresh_img(self, evt=None):
+        print("refresh")
+        if hasattr(self, 'image_back') and hasattr(self, 'image'):
+            # 逆天BUG
+            # self.image_back = self.image写成self.image=self.image_back  导致定位BUG到这边但是逻辑检查一直都没问题
+            # 原本以为经过图像增强的图像会改变在self.image_back上实际上是self.image
+            self.image_back = self.image  # 这对于从滑块切到其它选项卡时会起作用
+            # ------
+            if self.image != self.image_stack[-1]:
+                self.image_stack.append(self.image)  # 入栈及时保存
+            self.photo = ImageTk.PhotoImage(self.image_back)
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
+
+
+    def leave(self, evt=None):
+        print("leave")
+        if hasattr(self, 'image_back') and hasattr(self, 'image'):
+            self.canvas.delete("all")
+            self.photo = ImageTk.PhotoImage(self.image)
+            print("debug")
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
+        else:
+            print("bug")
+
+    def rgb_to_hsl(r, g, b):
+        # 将RGB值归一化到[0, 1]范围
+        r /= 255.0
+        g /= 255.0
+        b /= 255.0
+
+        # 计算max和min
+        max_val = max(r, g, b)
+        min_val = min(r, g, b)
+
+        # 计算亮度（l）
+        l = (max_val + min_val) / 2.0
+
+        # 如果max和min相等，灰度色调
+        if max_val == min_val:
+            h = 0.0
+            s = 0.0
+        else:
+            # 计算饱和度（s）
+            s = (max_val - min_val) / (1 - abs(2 * l - 1))
+
+            # 计算色相（h）
+            if max_val == r:
+                h = 60 * ((g - b) / (max_val - min_val) % 6)
+            elif max_val == g:
+                h = 60 * ((b - r) / (max_val - min_val) + 2)
+            elif max_val == b:
+                h = 60 * ((r - g) / (max_val - min_val) + 4)
+
+        # 规范化色相到[0, 360)
+        h = (h + 360) % 360
+
+        return h, s, l
+
+    def hsl_to_rgb(h, s, l):
+        # 规范化色相到[0, 360)
+        h = h % 360
+
+        # 如果饱和度为0，灰度色彩
+        if s == 0:
+            r = g = b = int(l * 255)
+        else:
+            # 计算辅助变量
+            if l < 0.5:
+                temp2 = l * (1.0 + s)
+            else:
+                temp2 = l + s - l * s
+
+            temp1 = 2.0 * l - temp2
+
+            # 计算RGB的每个分量
+            h /= 360.0
+            rgb = [0, 0, 0]
+            for i in range(3):
+                t = h + 1.0 / 3.0 * -(i - 1)
+                if t < 0:
+                    t += 1
+                elif t > 1:
+                    t -= 1
+
+                if 6.0 * t < 1.0:
+                    rgb[i] = int((temp1 + (temp2 - temp1) * 6.0 * t) * 255)
+                elif 2.0 * t < 1.0:
+                    rgb[i] = int(temp2 * 255)
+                elif 3.0 * t < 2.0:
+                    rgb[i] = int((temp1 + (temp2 - temp1) * (2.0 / 3.0 - t) * 6.0) * 255)
+                else:
+                    rgb[i] = int(temp1 * 255)
 
     def __event_bind(self):
         self.tk_button_open_image.bind('<Button-1>', self.load_image)
-        self.tk_scale_slider1.bind('<B1-Motion>', self.adjust_contrast)
-        self.tk_scale_slider2.bind('<Configure>', self.adjust_brightness)
+        self.tk_scale_contrast.bind('<B1-Motion>', self.adjust_contrast)
+        self.tk_scale_brightness.bind('<B1-Motion>', self.adjust_brightness)
         self.tk_scale_slider3.bind('<Configure>', self.adjust_exposure)
         self.tk_scale_slider4.bind('<Configure>', self.adjust_light_sense)
         self.tk_button_Sharpen.bind('<Button-1>', self.sharpen)
@@ -527,14 +649,17 @@ class Win(WinGUI):
         self.tk_button_Histogram_equalization.bind('<Button-1>', self.adjust_equalize)
         self.tk_scale_slider5.bind('<Configure>', self.adjust_saturation)
         self.tk_scale_Saturation.bind('<Configure>', self.adjust_L)
-        self.tk_scale_slider6.bind('<Configure>', self.adjust_H)
-        self.tk_scale_slider7.bind('<Configure>', self.adjust_S)
+        self.tk_scale_Hue.bind('<Configure>', self.adjust_H)
+        self.tk_scale_lightness.bind('<Configure>', self.adjust_S)
         self.tk_button_rotate.bind('<Button-1>', self.rotate_image)
         self.tk_button_trim.bind('<Button-1>', self.crop_image)
         self.tk_button_add.bind('<Button-1>', self.add_text)
         self.tk_button_open_watermark.bind('<Button-1>', self.load_image)
         self.tk_button_add_watermark.bind('<Button-1>', self.watermark)
-        self.canvas.bind('<Enter>', self.hint)
+        self.canvas.bind('<Enter>', self.enter)
+        self.canvas.bind('<Leave>', self.leave)  # 服了我直接调用show_image(flag=1,refusre=1)时这个事件会失效
+        self.tk_tabs_option.bind('<<NotebookTabChanged>>', self.refresh_img)
+        self.tk_button_cancel.bind('<Button-1>', self.undo_image)
         pass
 
 
