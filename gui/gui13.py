@@ -385,8 +385,8 @@ class Win(WinGUI):
         menu = Menu(self, tearoff=False)
         menu.add_cascade(label="文件", menu=self.menu_lq4uzrg8(menu))
         menu.add_command(label="撤销", command=self.undo_image)
-        menu.add_command(label="反撤销", command=self.uncancel)
         menu.add_command(label="重做", command=self.init_image)
+        menu.add_command(label="保存", command=self.save)
         menu.add_command(label="关于", command=self.about_me)
         return menu
 
@@ -410,7 +410,17 @@ class Win(WinGUI):
             self.show_image()
 
     def save(self):
-        print("点击了菜单")
+        # 保存图片功能
+        if hasattr(self, 'image'):
+            # 弹出文件选择对话框
+            file_path = filedialog.asksaveasfilename(defaultextension=".png",
+                                                     filetypes=[("PNG files", "*.png"),
+                                                                ("JPEG files", "*.jpg"),
+                                                                ("All files", "*.*")])
+
+            if file_path:
+                # 保存图片
+                self.image.save(file_path)
 
     def undo_image(self, evt=None):
         if hasattr(self, 'image_stack') and self.image is not None:
