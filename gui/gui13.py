@@ -301,6 +301,7 @@ class WinGUI(Tk):
     def __tk_scale_Saturation(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
         scale.place(x=13, y=342, width=150, height=50)
+        scale.set(100)
         return scale
 
     def __tk_label_Hue(self, parent):
@@ -309,7 +310,8 @@ class WinGUI(Tk):
         return label
 
     def __tk_scale_Hue(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
+        scale = Scale(parent, from_=0, to=360, orient=tk.HORIZONTAL, length=200,
+                      )
         scale.place(x=13, y=56, width=143, height=50)
         return scale
 
@@ -321,6 +323,7 @@ class WinGUI(Tk):
     def __tk_scale_lightness(self, parent):
         scale = Scale(parent, orient=HORIZONTAL, )
         scale.place(x=11, y=189, width=150, height=50)
+        scale.set(100)
         return scale
 
     def __tk_label_lightness(self, parent):
@@ -384,6 +387,7 @@ class Win(WinGUI):
     def create_menu(self):
         menu = Menu(self, tearoff=False)
         menu.add_cascade(label="文件", menu=self.menu_lq4uzrg8(menu))
+        menu.add_command(label="打开", command=self.load_image)
         menu.add_command(label="撤销", command=self.undo_image)
         menu.add_command(label="重做", command=self.init_image)
         menu.add_command(label="保存", command=self.save)
@@ -441,7 +445,8 @@ class Win(WinGUI):
         print("点击了菜单")
 
     def init_image(self):
-        print("点击了菜单")
+        self.image = self.image_stack[0].copy()
+        self.show_image()
 
     def about_me(self):
         print("点击了菜单")
@@ -501,8 +506,7 @@ class Win(WinGUI):
         print("<Configure>事件未处理:", evt)
 
     def adjust_H(self, evt):
-        print("<Configure>事件未处理:", evt)
-
+        print("HHHHH")
     def adjust_S(self, evt):
         print("<Configure>事件未处理:", evt)
 
@@ -581,6 +585,45 @@ class Win(WinGUI):
                 self.image_stack.append(self.image)  # 入栈及时保存
             self.photo = ImageTk.PhotoImage(self.image_back)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
+            # 查询当前选项卡的名称
+            # 如果是HSL调整
+            # 则将self.image转hsl
+
+            # 查询当前选项卡的名称
+            current_tab = self.tk_tabs_option.tab(self.tk_tabs_option.select(), "text")
+
+            # 查询当前选项卡的名称
+            current_tab = self.tk_tabs_option.tab(self.tk_tabs_option.select(), "text")
+
+            if current_tab == "HSL调整":
+                # 获取图像的宽度和高度
+                width, height = self.image_back.size
+
+                # 遍历图像的每个像素
+                for x in range(width):
+                    for y in range(height):
+                        # 获取当前像素的 RGB 值
+                        r, g, b = self.image_back.getpixel((x, y))
+
+                        # 将 RGB 转换为 HSL
+                        h, s, l = self.rgb_to_hsl(r, g, b)
+
+                        # 根据 HSL 调整，这里需要根据你的调整算法修改
+                        # 这里只是一个示例，你需要根据你的需求进行调整
+                        h = (h + 0.1) % 1.0
+                        s = min(1.0, s * 1.1)
+                        l = min(1.0, l * 1.1)
+
+                        # 将 HSL 转换回 RGB
+                        new_r, new_g, new_b = self.hsl_to_rgb(h, s, l)
+
+                        # 更新图像的当前像素
+                        self.image_back.putpixel((x, y), (int(new_r), int(new_g), int(new_b)))
+
+            if self.image != self.image_stack[-1]:
+                self.image_stack.append(self.image)  # 入栈及时保存
+            self.photo = ImageTk.PhotoImage(self.image_back)
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def leave(self, evt=None):
         print("leave")
@@ -592,7 +635,7 @@ class Win(WinGUI):
         else:
             print("bug")
 
-    def rgb_to_hsl(r, g, b):
+    def rgb_to_hsl(self, r, g, b):
         # 将RGB值归一化到[0, 1]范围
         r /= 255.0
         g /= 255.0
@@ -626,7 +669,7 @@ class Win(WinGUI):
 
         return h, s, l
 
-    def hsl_to_rgb(h, s, l):
+    def hsl_to_rgb(self, h, s, l):
         # 规范化色相到[0, 360)
         h = h % 360
 
@@ -660,6 +703,8 @@ class Win(WinGUI):
                     rgb[i] = int((temp1 + (temp2 - temp1) * (2.0 / 3.0 - t) * 6.0) * 255)
                 else:
                     rgb[i] = int(temp1 * 255)
+        return tuple(rgb)
+
 
     def on_mouse_press(self, event):
         global start_x, start_y
@@ -698,7 +743,7 @@ class Win(WinGUI):
         self.tk_button_Histogram_equalization.bind('<Button-1>', self.adjust_equalize)
         self.tk_scale_slider5.bind('<Configure>', self.adjust_saturation)
         self.tk_scale_Saturation.bind('<Configure>', self.adjust_L)
-        self.tk_scale_Hue.bind('<Configure>', self.adjust_H)
+        self.tk_scale_Hue.bind('<B1-Motion>', self.adjust_H)
         self.tk_scale_lightness.bind('<Configure>', self.adjust_S)
         self.tk_button_rotate.bind('<Button-1>', self.rotate_image)
         self.tk_button_trim.bind('<Button-1>', self.crop_image)
