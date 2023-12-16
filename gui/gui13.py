@@ -13,7 +13,7 @@ from tkinter.ttk import Notebook, Button
 
 import cv2
 import numpy as np
-from PIL import Image, ImageTk, ImageEnhance, ImageOps
+from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageGrab
 
 
 class WinGUI(Tk):
@@ -80,7 +80,7 @@ class WinGUI(Tk):
                 self.show_image()
             else:
                 self.watermark_image = Image.open(file_path)
-                self.watermark_image_back=self.watermark_image.copy()
+                self.watermark_image_back = self.watermark_image.copy()
                 self.adjust_image_size(flag=1)
                 self.watermark_photo = ImageTk.PhotoImage(self.watermark_image)
                 self.tk_canvas_watermark.create_image(0, 0, anchor=tk.NW, image=self.watermark_photo)
@@ -117,17 +117,21 @@ class WinGUI(Tk):
 
         # 计算调整后的大小，保持纵横比
         if original_width > original_height:
-            new_width = canvas_width
-            new_height = int((canvas_width / original_width) * original_height)
+            self.new_width = canvas_width
+            self.new_height = int((canvas_width / original_width) * original_height)
         else:
-            new_height = canvas_height
-            new_width = int((canvas_height / original_height) * original_width)
+            self.new_height = canvas_height
+            self.new_width = int((canvas_height / original_height) * original_width)
+
+        print("init")
+        print(self.new_width)
+        print(self.new_height)
 
         # 使用thumbnail方法调整图像大小
         if flag == 1:
-            self.watermark_image.thumbnail((new_width, new_height), Image.LANCZOS)
+            self.watermark_image.thumbnail((self.new_width, self.new_height), Image.LANCZOS)
         else:
-            self.image.thumbnail((new_width, new_height), Image.LANCZOS)
+            self.image.thumbnail((self.new_width, self.new_height), Image.LANCZOS)
 
     def __win(self):
         self.title("Tkinter")
@@ -578,7 +582,9 @@ class Win(WinGUI):
             self.last_op = inspect.currentframe().f_code.co_name
 
     def add_text(self, evt):
-        print("<Button-1>事件未处理:", evt)
+        text = self.tk_input_text.get()
+        draggable_text = DraggableText(self.canvas, text, self.canvas.winfo_x(), self.canvas.winfo_y())
+        self.last_op = self.add_text.__name__
 
     def watermark(self, evt=None):
         # 打开背景图和水印图
@@ -594,13 +600,15 @@ class Win(WinGUI):
 
         # 将水印叠加到背景图上
         result = Image.blend(background, watermark, alpha)
-        self.image=result
+        self.image = result
         self.show_image()
 
         # 保存结果
         # result.save(output_path, format='PNG')
 
     def enter(self, evt=None):
+        if self.last_op == self.add_text.__name__:
+            return
         print("enter")
         # 显示调整后的图片
         if hasattr(self, 'init_img'):
@@ -610,6 +618,9 @@ class Win(WinGUI):
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.init_photo)
 
     def refresh_img(self, evt=None):
+        if self.last_op == self.add_text.__name__:
+            self.last_op = self.refresh_img.__name__
+            return
         print("refresh")
         if hasattr(self, 'image_back') and hasattr(self, 'image'):
             # 逆天BUG
@@ -662,6 +673,25 @@ class Win(WinGUI):
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def leave(self, evt=None):
+        if self.last_op == self.add_text.__name__:
+            # 获取画布内容
+            print("text")
+            x = self.winfo_rootx() + self.canvas.winfo_x() + 2
+            print(x)
+            y = self.winfo_rooty() + self.canvas.winfo_y() + 2
+            print(y)
+            x1 = x + self.new_width - 4
+            print(self.canvas.winfo_width())
+            y1 = y + self.new_height - 2
+            print(self.canvas.winfo_height())
+            image = ImageGrab.grab((x, y, x1, y1))
+
+            # 保存画布内容为图像文件
+            save_path = "../image/canvas_snapshot.png"
+            image.save(save_path)
+            self.image = Image.open(save_path)
+            print("保存成功:", save_path)
+            return
         print("leave")
         if hasattr(self, 'image_back') and hasattr(self, 'image'):
             self.canvas.delete("all")
@@ -793,6 +823,37 @@ class Win(WinGUI):
 
         self.tk_tabs_option.bind('<<NotebookTabChanged>>', self.refresh_img)
         self.tk_button_cancel.bind('<Button-1>', self.undo_image)
+        pass
+
+
+class DraggableText:
+    def __init__(self, canvas, text, x, y):
+        self.canvas = canvas
+        self.text = text
+        self.x = x
+        self.y = y
+        self.drag_data = {"x": 0, "y": 0}
+        self.create_text()
+
+    def create_text(self):
+        self.text_widget = self.canvas.create_text(self.x, self.y, text=self.text, font=("Arial", 12), tags="draggable")
+
+        self.canvas.tag_bind(self.text_widget, "<ButtonPress-1>", self.on_press)
+        self.canvas.tag_bind(self.text_widget, "<B1-Motion>", self.on_drag)
+        self.canvas.tag_bind(self.text_widget, "<ButtonRelease-1>", self.on_release)
+
+    def on_press(self, event):
+        self.drag_data["x"] = event.x
+        self.drag_data["y"] = event.y
+
+    def on_drag(self, event):
+        dx = event.x - self.drag_data["x"]
+        dy = event.y - self.drag_data["y"]
+        self.canvas.move(self.text_widget, dx, dy)
+        self.drag_data["x"] = event.x
+        self.drag_data["y"] = event.y
+
+    def on_release(self, event):
         pass
 
 
