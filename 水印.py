@@ -17,7 +17,7 @@ def add_visible_watermark(background_path, watermark_path, output_path, alpha=0.
 
 
 # 使用示例
-background_image_path = './image/img2.jpg'
+background_image_path = './image/shuiyin.png'
 watermark_image_path = './image/miku.jpg'
 output_image_path = 'C:/Users/minamichiaki/Desktop/output.png'
 

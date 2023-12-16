@@ -11,20 +11,24 @@ class ImageEditor:
         self.image = Image.open(image_path).convert("RGB")
         self.edited_image = self.image.copy()
 
-        self.hue_scale = tk.Scale(self.root, from_=0.0, to=1.0, resolution=0.01, orient="horizontal", command=self.update_image)
+        self.hue_scale = tk.Scale(self.root, from_=0.0, to=1.0, resolution=0.01, orient="horizontal", )
         self.hue_scale.set(0.5)
         self.hue_scale.pack()
 
-        self.saturation_scale = tk.Scale(self.root, from_=0.0, to=1.0, resolution=0.01, orient="horizontal", command=self.update_image)
+        self.saturation_scale = tk.Scale(self.root, from_=0.0, to=1.0, resolution=0.01, orient="horizontal", )
         self.saturation_scale.set(0.8)
         self.saturation_scale.pack()
 
-        self.lightness_scale = tk.Scale(self.root, from_=0.0, to=10.0, resolution=0.01, orient="horizontal", command=self.update_image)
+        self.lightness_scale = tk.Scale(self.root, from_=0.0, to=10.0, resolution=0.01, orient="horizontal", )
         self.lightness_scale.set(1.2)
         self.lightness_scale.pack()
 
         self.image_label = tk.Label(self.root)
         self.image_label.pack()
+
+        self.hue_scale.bind("<ButtonRelease>", self.update_image)
+        self.saturation_scale.bind("<ButtonRelease>", self.update_image)
+        self.lightness_scale.bind("<ButtonRelease>", self.update_image)
 
         self.update_image()
 

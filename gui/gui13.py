@@ -62,21 +62,29 @@ class WinGUI(Tk):
         self.canvas = self.__tk_canvas_image(self)
         self.init_canvas = self.canvas
 
-    def load_image(self, evt=None):
+    def load_image(self, evt=None, flag=0):
         self.crop_canvas.place(x=384, y=78, width=960, height=960)
-        # self.crop_canvas.place(x=0, y=0, width=0, height=0)
         self.canvas.place(x=384, y=78, width=960, height=960)
+
         # 弹出文件选择对话框
         file_path = filedialog.askopenfilename()
 
         if file_path:
-            # 打开并调整图片大小以适应画布
-            self.image_stack = []
-            self.image = Image.open(file_path)
-            self.adjust_image_size()
-            self.init_img = self.image  # 保持原图不变
-            self.image_stack.append(self.image)
-            self.show_image()
+            if flag == 0:
+                # 打开并调整图片大小以适应画布
+                self.image_stack = []
+                self.image = Image.open(file_path)
+                self.adjust_image_size()
+                self.init_img = self.image  # 保持原图不变
+                self.image_stack.append(self.image)
+                self.show_image()
+            else:
+                self.watermark_image = Image.open(file_path)
+                self.watermark_image_back=self.watermark_image.copy()
+                self.adjust_image_size(flag=1)
+                self.watermark_photo = ImageTk.PhotoImage(self.watermark_image)
+                self.tk_canvas_watermark.create_image(0, 0, anchor=tk.NW, image=self.watermark_photo)
+                self.tk_canvas_watermark.create_image(0, 0, anchor=tk.NW, image=self.watermark_photo)
 
     def show_image(self, evt=None, flag=0, refresh=0):
         print("sqa")
@@ -95,13 +103,17 @@ class WinGUI(Tk):
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
             self.crop_canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
-    def adjust_image_size(self):
+    def adjust_image_size(self, flag=0):
         # 获取画布的大小
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-
-        # 获取图像的原始大小
         original_width, original_height = self.image.size
+
+        if flag == 1:
+            canvas_width = self.tk_canvas_watermark.winfo_width()
+            canvas_height = self.tk_canvas_watermark.winfo_height()
+            # 获取图像的原始大小
+            original_width, original_height = self.watermark_image.size
 
         # 计算调整后的大小，保持纵横比
         if original_width > original_height:
@@ -112,7 +124,10 @@ class WinGUI(Tk):
             new_width = int((canvas_height / original_height) * original_width)
 
         # 使用thumbnail方法调整图像大小
-        self.image.thumbnail((new_width, new_height), Image.LANCZOS)
+        if flag == 1:
+            self.watermark_image.thumbnail((new_width, new_height), Image.LANCZOS)
+        else:
+            self.image.thumbnail((new_width, new_height), Image.LANCZOS)
 
     def __win(self):
         self.title("Tkinter")
@@ -357,7 +372,7 @@ class WinGUI(Tk):
         return label
 
     def __tk_canvas_watermark(self, parent):
-        canvas = Canvas(parent, bg="#aaa")
+        canvas = Canvas(parent, )
         canvas.place(x=176, y=273, width=182, height=196)
         return canvas
 
@@ -400,7 +415,7 @@ class Win(WinGUI):
         menu.add_command(label="保存", command=self.save)
         return menu
 
-    def load_image_wrapper(self):
+    def load_image_wrapper(self, evt=None):
         # 弹出文件选择对话框
         file_path = filedialog.askopenfilename()
 
@@ -412,6 +427,9 @@ class Win(WinGUI):
             self.init_img = self.image  # 保持原图不变
             self.image_stack.append(self.image)
             self.show_image()
+
+    def load_watermark_image(self, evt=None):
+        self.load_image(flag=1)
 
     def save(self):
         # 保存图片功能
@@ -507,6 +525,7 @@ class Win(WinGUI):
 
     def adjust_H(self, evt):
         print("HHHHH")
+
     def adjust_S(self, evt):
         print("<Configure>事件未处理:", evt)
 
@@ -561,8 +580,25 @@ class Win(WinGUI):
     def add_text(self, evt):
         print("<Button-1>事件未处理:", evt)
 
-    def watermark(self, evt):
-        print("<Button-1>事件未处理:", evt)
+    def watermark(self, evt=None):
+        # 打开背景图和水印图
+        background = self.image.convert('RGBA')
+        watermark = self.watermark_image_back.convert('RGBA')
+        # 调整水印大小以适应背景图
+        alpha = 0.1
+        # background = self.watermark_image_back.convert('RGBA')
+        # watermark = self.image.convert('RGBA')
+        # # 调整水印大小以适应背景图
+        # alpha = 0.9
+        watermark = watermark.resize(background.size, Image.LANCZOS)
+
+        # 将水印叠加到背景图上
+        result = Image.blend(background, watermark, alpha)
+        self.image=result
+        self.show_image()
+
+        # 保存结果
+        # result.save(output_path, format='PNG')
 
     def enter(self, evt=None):
         print("enter")
@@ -705,7 +741,6 @@ class Win(WinGUI):
                     rgb[i] = int(temp1 * 255)
         return tuple(rgb)
 
-
     def on_mouse_press(self, event):
         global start_x, start_y
         start_x = event.x
@@ -748,7 +783,7 @@ class Win(WinGUI):
         self.tk_button_rotate.bind('<Button-1>', self.rotate_image)
         self.tk_button_trim.bind('<Button-1>', self.crop_image)
         self.tk_button_add.bind('<Button-1>', self.add_text)
-        self.tk_button_open_watermark.bind('<Button-1>', self.load_image)
+        self.tk_button_open_watermark.bind('<Button-1>', self.load_watermark_image)
         self.tk_button_add_watermark.bind('<Button-1>', self.watermark)
         self.canvas.bind('<Enter>', self.enter)
         self.canvas.bind('<Leave>', self.leave)  # 服了我直接调用show_image(flag=1,refusre=1)时这个事件会失效
