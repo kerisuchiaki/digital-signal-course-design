@@ -306,7 +306,7 @@ class ImageProcessorApp:
     def adjust_light_sense(self, event=None):
         # 调整光感功能
         if hasattr(self, 'image'):
-            light_sense_factor = self.light_sense_scale.get() / 100.0
+            light_sense_factor = self.light_sense_scale.get() / 10.0
             light_sense_adjusted = self.lightSense(np.array(self.init_img), light_sense_factor)
 
             # 将 NumPy 数组转换回 PIL 图像

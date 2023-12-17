@@ -33,14 +33,19 @@ class WinGUI(Tk):
         self.tk_label_brightness = self.__tk_label_brightness(self.tk_frame_container0)  # 亮度
         self.tk_scale_brightness = self.__tk_scale_brightness(self.tk_frame_container0)
         self.tk_label_exposure = self.__tk_label_exposure(self.tk_frame_container0)
-        self.tk_scale_slider3 = self.__tk_scale_slider3(self.tk_frame_container0)
+        self.tk_scale_exposure = self.__tk_scale_exposure(self.tk_frame_container0)
         self.tk_label_pome = self.__tk_label_pome(self.tk_frame_container0)
-        self.tk_scale_slider4 = self.__tk_scale_slider4(self.tk_frame_container0)
-        self.tk_button_Sharpen = self.__tk_button_Sharpen(self.tk_frame_container0)  # 锐化，考虑做成滑块
-        self.tk_button_Smooth = self.__tk_button_Smooth(self.tk_frame_container0)  # 平滑，同上
+        self.tk_scale_pome = self.__tk_scale_pome(self.tk_frame_container0)
+        self.tk_label_sharpen = Label(self.tk_frame_container0, text="锐化", anchor="center", )
+        self.tk_label_sharpen.place(x=252, y=208, width=50, height=30)
+        self.tk_scale_Sharpen = self.__tk_scale_Sharpen(self.tk_frame_container0)  # 锐化，考虑做成滑块
+        self.tk_label_smooth = Label(self.tk_frame_container0, text="平滑", anchor="center", )
+        self.tk_label_smooth.place(x=252, y=298, width=50, height=30)
+        # self.tk_scale_smooth = self.__tk_scale_Sharpen(self.tk_frame_container0)  # 锐化，考虑做成滑块
+        self.tk_scale_Smooth = self.__tk_scale_Smooth(self.tk_frame_container0)  # 平滑，同上
         self.tk_button_Histogram_equalization = self.__tk_button_Histogram_equalization(self.tk_frame_container0)
         self.tk_label_saturation = self.__tk_label_saturation(self.tk_frame_container0)
-        self.tk_scale_slider5 = self.__tk_scale_slider5(self.tk_frame_container0)
+        self.tk_scale_saturation = self.__tk_scale_saturation(self.tk_frame_container0)
         self.tk_frame_container1 = self.__tk_frame_container1(self.tk_tabs_option_2)
         self.tk_label_Hue = self.__tk_label_Hue(self.tk_frame_container1)
         self.tk_scale_Hue = self.__tk_scale_Hue(self.tk_frame_container1)
@@ -141,6 +146,7 @@ class WinGUI(Tk):
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        # self.config(bg="black")
         self.geometry(geometry)
 
         # self.resizable(width=False, height=False)
@@ -251,7 +257,7 @@ class WinGUI(Tk):
 
     def __tk_label_brightness(self, parent):
         label = Label(parent, text="亮度调节", anchor="center", )
-        label.place(x=26, y=82, width=87, height=30)
+        label.place(x=26, y=102, width=87, height=30)
         return label
 
     def __tk_scale_brightness(self, parent):
@@ -264,11 +270,13 @@ class WinGUI(Tk):
 
     def __tk_label_exposure(self, parent):
         label = Label(parent, text="曝光", anchor="center", )
-        label.place(x=1, y=180, width=146, height=30)
+        label.place(x=1, y=210, width=146, height=30)
         return label
 
-    def __tk_scale_slider3(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
+    def __tk_scale_exposure(self, parent):
+        scale = Scale(parent, from_=0, to=100, orient=tk.HORIZONTAL, length=200,
+                      )
+        scale.set(50)
         scale.place(x=0, y=231, width=150, height=50)
         return scale
 
@@ -277,20 +285,24 @@ class WinGUI(Tk):
         label.place(x=53, y=276, width=50, height=30)
         return label
 
-    def __tk_scale_slider4(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
+    def __tk_scale_pome(self, parent):
+        scale = Scale(parent, from_=0, to=100, orient=tk.HORIZONTAL, length=200,
+                      )
+        scale.set(50)
         scale.place(x=0, y=309, width=150, height=50)
         return scale
 
-    def __tk_button_Sharpen(self, parent):
-        btn = Button(parent, text="锐化", takefocus=False, )
-        btn.place(x=252, y=238, width=50, height=30)
-        return btn
+    def __tk_scale_Sharpen(self, parent):
+        scale = Scale(parent, from_=0, to=100, orient=tk.HORIZONTAL, length=200,
+                      )
+        scale.place(x=202, y=238, width=150, height=60)
+        return scale
 
-    def __tk_button_Smooth(self, parent):
-        btn = Button(parent, text="平滑", takefocus=False, )
-        btn.place(x=255, y=328, width=50, height=30)
-        return btn
+    def __tk_scale_Smooth(self, parent):
+        scale = Scale(parent, from_=0, to=10, orient=tk.HORIZONTAL, length=200,
+                      )
+        scale.place(x=202, y=328, width=150, height=50)
+        return scale
 
     def __tk_button_Histogram_equalization(self, parent):
         btn = Button(parent, text="直方图均衡化", takefocus=False, )
@@ -302,8 +314,10 @@ class WinGUI(Tk):
         label.place(x=43, y=383, width=92, height=30)
         return label
 
-    def __tk_scale_slider5(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
+    def __tk_scale_saturation(self, parent):
+        scale = Scale(parent, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
+                      )
+        scale.set(100)
         scale.place(x=0, y=412, width=150, height=50)
         return scale
 
@@ -488,31 +502,102 @@ class Win(WinGUI):
             # 获取当前函数的名称
             self.last_op = inspect.currentframe().f_code.co_name
 
-    def adjust_exposure(self, evt):
-        print("<Configure>事件未处理:", evt)
+    def _adjust_exposure(self, img, b):
+        # 曝光度调整 参数 b: 0~100
+        print("pre",b)
+        b = np.float32(b - 50) / 20.0
+        print("pro",b)
+        res = img.astype(np.float32)
+        print(pow(2, b))
+        res = res * pow(2, b)
+        res = np.where(res > 255, 255, res)
+        res = res.astype(np.uint8)
+        return res
+
+    def adjust_exposure(self, event=None):
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        # 调整曝光度功能
+        if hasattr(self, 'image'):
+            exposure_factor = self.tk_scale_exposure.get()
+            exposure_adjusted = self._adjust_exposure(np.array(self.image_back), exposure_factor)
+            self.image = Image.fromarray(exposure_adjusted)
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
+
+    def lightSense(self, img, a):
+        a = np.float32(a - 50) / 80.0
+        a = a * 255
+        res = img.astype(np.float32)
+        res = res + a * res / 255.0
+        res = np.where(res > 255, 255, res)
+        res = np.where(res < 0, 0, res)
+        res = res.astype(np.uint8)
+        return res
 
     def adjust_light_sense(self, evt):
-        print("<Configure>事件未处理:", evt)
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        # 调整光感功能
+        if hasattr(self, 'image'):
+            light_sense_factor = self.tk_scale_pome.get()
+            print("光感系数", light_sense_factor)
+            light_sense_adjusted = self.lightSense(np.array(self.image_back), light_sense_factor)
+
+            # 将 NumPy 数组转换回 PIL 图像
+            self.image = Image.fromarray(light_sense_adjusted)
+
+            # 显示调整光感后的图片
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
 
     def sharpen(self, evt):
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
         if hasattr(self, 'image'):
             # Convert to OpenCV format
-            img_np = np.array(self.image)
+            img_np = np.array(self.image_back)
             img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-            # Apply sharpening filter
+            # 获取滑块值
+            sharpen_value = self.tk_scale_Sharpen.get()
+            print(sharpen_value)
+            sharpen_value = max(sharpen_value, 0) / 100.0  # 将取值截断到 0 到 1 之间
+            print(sharpen_value)
+
+            # Apply sharpening filter based on slider value
             kernel = np.array([[-1, -1, -1],
-                               [-1, 9, -1],
+                               [-1, 9 + sharpen_value, -1],
                                [-1, -1, -1]])
             sharpened_img = cv2.filter2D(img_cv2, -1, kernel)
 
             # Convert back to PIL format
             self.image = Image.fromarray(cv2.cvtColor(sharpened_img, cv2.COLOR_BGR2RGB))
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
 
-            self.show_image(1)
+    def smooth(self, evt=None):
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        if hasattr(self, 'image'):
+            # Convert to OpenCV format
+            img_np = np.array(self.image_back)
+            img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-    def smooth(self, evt):
-        print("<Button-1>事件未处理:", evt)
+            # 获取滑块值，并确保是正奇数
+            smooth_value = self.tk_scale_Smooth.get()
+            if smooth_value % 2 == 0:
+                smooth_value += 1
+            smooth_value = smooth_value if smooth_value % 2 != 0 else smooth_value + 1  #
+            print(smooth_value)
+
+            # Apply smoothing filter based on slider value
+            smoothed_img = cv2.GaussianBlur(img_cv2, (smooth_value, smooth_value), 0)
+
+            # Convert back to PIL format
+            self.image = Image.fromarray(cv2.cvtColor(smoothed_img, cv2.COLOR_BGR2RGB))
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
 
     def adjust_equalize(self, evt):
         # 直方图均衡化功能
@@ -520,9 +605,18 @@ class Win(WinGUI):
             equalize_adjusted = ImageOps.equalize(self.image)
             self.image = equalize_adjusted
             self.show_image()
+            self.image_stack.append(self.image.copy())
 
     def adjust_saturation(self, evt):
-        print("<Configure>事件未处理:", evt)
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        # 饱和度调整功能
+        if hasattr(self, 'image'):
+            saturation_factor = self.tk_scale_saturation.get() / 100.0
+            saturation_adjusted = ImageEnhance.Color(self.init_img).enhance(saturation_factor)
+            self.image = saturation_adjusted
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
 
     def adjust_L(self, evt):
         print("<Configure>事件未处理:", evt)
@@ -801,12 +895,12 @@ class Win(WinGUI):
         self.tk_button_open_image.bind('<Button-1>', self.load_image)
         self.tk_scale_contrast.bind('<B1-Motion>', self.adjust_contrast)
         self.tk_scale_brightness.bind('<B1-Motion>', self.adjust_brightness)
-        self.tk_scale_slider3.bind('<Configure>', self.adjust_exposure)
-        self.tk_scale_slider4.bind('<Configure>', self.adjust_light_sense)
-        self.tk_button_Sharpen.bind('<Button-1>', self.sharpen)
-        self.tk_button_Smooth.bind('<Button-1>', self.smooth)
+        self.tk_scale_exposure.bind('<B1-Motion>', self.adjust_exposure)
+        self.tk_scale_pome.bind('<B1-Motion>', self.adjust_light_sense)
+        self.tk_scale_Sharpen.bind('<B1-Motion>', self.sharpen)
+        self.tk_scale_Smooth.bind('<B1-Motion>', self.smooth)
         self.tk_button_Histogram_equalization.bind('<Button-1>', self.adjust_equalize)
-        self.tk_scale_slider5.bind('<Configure>', self.adjust_saturation)
+        self.tk_scale_saturation.bind('<B1-Motion>', self.adjust_saturation)
         self.tk_scale_Saturation.bind('<Configure>', self.adjust_L)
         self.tk_scale_Hue.bind('<B1-Motion>', self.adjust_H)
         self.tk_scale_lightness.bind('<Configure>', self.adjust_S)

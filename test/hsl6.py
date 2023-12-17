@@ -18,9 +18,10 @@ def s_and_b(arg):
     lsImg = cv2.cvtColor(hlsCopy, cv2.COLOR_HLS2BGR)
     # 显示调整后的效果
     cv2.imshow("l and s", imutils.resize(lsImg, 650))
+    cv2.imwrite("../image/sakura_sky.png", hlsImg)
 
 
-image = cv2.imread('E:/peking_rw/ocr_project/base_prehandle/img/cartoon.jpg', 1)
+image = cv2.imread('../image/sakura.jpg', 1)
 # 图像归一化，且转换为浮点型, 颜色空间转换 BGR转为HLS
 fImg = image.astype(np.float32)
 fImg = fImg / 255.0

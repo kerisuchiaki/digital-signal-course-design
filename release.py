@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageDraw, ImageFont
 
-from demo1 import add_watermark
+from release2 import add_watermark
 
 
 class ImageProcessorApp:
