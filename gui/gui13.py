@@ -99,7 +99,7 @@ class WinGUI(Tk):
 
         return adjusted_image
 
-    def adjust_temperature(self,value,evt=None):
+    def adjust_temperature(self, value, evt=None):
         if self.last_op != inspect.currentframe().f_code.co_name:
             self.image_back = self.image
         if hasattr(self, 'image_back') and self.image is not None:
@@ -111,7 +111,6 @@ class WinGUI(Tk):
             self.image = self.adjust_temperature_1(temperature)
             self.show_image(flag=1)
             self.last_op = inspect.currentframe().f_code.co_name
-
 
     def adjust_hue(self, evt=None):
         if self.last_op != inspect.currentframe().f_code.co_name:
@@ -634,7 +633,14 @@ class Win(WinGUI):
 
             # 获取滑块值
             sharpen_value = self.tk_scale_Sharpen.get()
+            # 当滑块的值为0时不调整
             print(sharpen_value)
+
+            if sharpen_value < 0.1:
+                self.image=self.image_back
+                self.show_image(flag=1)
+                self.last_op = inspect.currentframe().f_code.co_name
+                return
             sharpen_value = max(sharpen_value, 0) / 100.0  # 将取值截断到 0 到 1 之间
             print(sharpen_value)
 
