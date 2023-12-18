@@ -11,6 +11,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageGrab
 
+from Utils.color_temperature import change_temperature
+
 
 class WinGUI(Tk):
     def __init__(self):
