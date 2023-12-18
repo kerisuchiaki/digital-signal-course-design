@@ -54,9 +54,9 @@ class ImageProcessorApp:
 
         # 创建色温滑块
         self.temperature_scale_var = IntVar()
-        self.temperature_scale = Scale(self.control_frame, label="色温调节", from_=2000, to=8000, orient=tk.HORIZONTAL,
-                                       variable=self.temperature_scale_var, command=self.adjust_temperature)
-        self.temperature_scale.set(5000)  # 设置一个默认值
+        self.temperature_scale = Scale(self.control_frame, label="色温调节", from_=0, to=100, orient=tk.HORIZONTAL,
+                                       variable=self.temperature_scale_var, command=self.adjust_temperature_slider)
+        self.temperature_scale.set(50)  # 设置一个默认值
         self.temperature_scale.pack(side=tk.TOP, padx=5, pady=5)
 
         # 创建色调滑块
@@ -195,31 +195,66 @@ class ImageProcessorApp:
             # 添加当前图像到堆栈
             self.image_stack.append(self.image.copy())
 
-    def adjust_temperature(self, evt=None):
-        if not hasattr(self, 'init_img'):
-            return
-        if hasattr(self, 'image'):
-            # Convert to OpenCV format
-            img_np = np.array(self.init_img)
-            img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    def adjust_temperature_slider(self, evt=None):
 
-            # 获取滑块值
+        def adjust_temperature(img, temperature):
+            # print(temperature)
+            # 定义色温范围
+            min_temperature = 0
+            max_temperature = 100
+
+            # 将色温值映射到 [0, 1] 范围
+            normalized_temperature = (temperature - min_temperature) / (max_temperature - min_temperature)
+
+            # 定义蓝色通道的色温映射曲线
+            blue_curve = np.array(
+                [0, 0.03951, 0.07592, 0.13793, 0.20915, 0.29977, 0.40986, 0.53903, 0.68698, 0.85445, 1.0])
+
+            # 使用线性插值计算新的蓝色通道值
+            new_blue = np.interp(normalized_temperature, np.linspace(0, 1, len(blue_curve)), blue_curve)
+
+            # 对红色和绿色通道应用相同的插值
+            new_red = np.interp(normalized_temperature, np.linspace(0, 1, len(blue_curve)), blue_curve[::-1])
+            new_green = 1 - (new_blue + new_red)
+
+            # 创建新的 RGB 调整矩阵
+            color_adjustment_matrix = np.column_stack([new_blue, new_green, new_red])
+            # for i in range(img.shape[0]):
+            #     for j in range(img.shape[1]):
+            #         R = img[i, j, 2]
+            #         G = img[i, j, 1]
+            #         B = img[i, j, 0]
+            #         print(R, G, B)
+            # 应用调整矩阵
+            adjusted_img = cv2.transform(img, color_adjustment_matrix)
+            # adjusted_img = cv2.warpAffine(img, color_adjustment_matrix, (img.shape[1], img.shape[0]))
+            # adjusted_img = cv2.transform(img, np.transpose(color_adjustment_matrix))
+            # for i in range(adjusted_img.shape[0]):
+            #     for j in range(adjusted_img.shape[1]):
+            #         R = adjusted_img[i, j, 2]
+            #         G = adjusted_img[i, j, 1]
+            #         B = adjusted_img[i, j, 0]
+            #         print(R, G, B)
+
+            # 将调整后的图像值限制在 [0, 255] 范围内
+            # adjusted_img = np.clip(adjusted_img, 0, 255).astype(np.uint8)
+            # 使用仿射变换应用变换矩阵
+            # adjusted_img = cv2.warpAffine(img, color_adjustment_matrix, (img.shape[1], img.shape[0]))
+
+            # for i in range(adjusted_img.shape[0]):
+            #     for j in range(adjusted_img.shape[1]):
+            #         # R = adjusted_img[i, j, 2]
+            #         # G = adjusted_img[i, j, 1]
+            #         # B = adjusted_img[i, j, 0]
+            #         print(adjusted_img[i,j])
+
+            return adjusted_img
+
+        if hasattr(self, 'init_img'):
             temperature_value = self.temperature_scale.get()
-
-            # 调整色温
-            temperature_matrix = np.float32([[1.0, 0.0, 0.0],
-                                             [0.0, 1.0, 0.0]])
-
-            temperature_matrix[0, 2] = (temperature_value - 5000) / 5000.0
-            temperature_matrix[1, 2] = (temperature_value - 5000) / 5000.0
-
-            # Apply warpAffine using the transformation matrix
-            adjusted_img = cv2.warpAffine(img_cv2, temperature_matrix, img_cv2.shape[:2][::-1])
-
-            # Convert back to PIL format
-            self.image = Image.fromarray(cv2.cvtColor(adjusted_img, cv2.COLOR_BGR2RGB))
+            adjusted_img = adjust_temperature(np.array(self.init_img), temperature_value)
+            self.image = Image.fromarray(adjusted_img)
             self.display_image()
-            # 添加当前图像到堆栈
             self.image_stack.append(self.image.copy())
 
     def adjust_tint(self, evt=None):

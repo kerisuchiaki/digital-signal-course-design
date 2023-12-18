@@ -19,6 +19,7 @@ from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageGrab
 class WinGUI(Tk):
     def __init__(self):
         super().__init__()
+        self.file_path = None
         self.image_back = None
         self.image_back_last = None
         self.__win()
@@ -26,6 +27,9 @@ class WinGUI(Tk):
         self.tk_button_cancel = self.__tk_button_cancel(self)
         self.tk_button_modify = self.__tk_button_modify(self)
         self.tk_button_save = self.__tk_button_save(self)
+        self.image_path_label = Label(self)
+        self.image_path_label.config(text="当前图片路径：")
+        self.image_path_label.place(x=376, y=1)
         self.tk_tabs_option = self.__tk_tabs_option(self)
         self.tk_frame_container0 = self.__tk_frame_container0(self.tk_tabs_option_1)
         self.tk_label_contrast = self.__tk_label_contrast(self.tk_frame_container0)  # 对比度
@@ -41,8 +45,20 @@ class WinGUI(Tk):
         self.tk_scale_Sharpen = self.__tk_scale_Sharpen(self.tk_frame_container0)  # 锐化，考虑做成滑块
         self.tk_label_smooth = Label(self.tk_frame_container0, text="平滑", anchor="center", )
         self.tk_label_smooth.place(x=252, y=298, width=50, height=30)
-        # self.tk_scale_smooth = self.__tk_scale_Sharpen(self.tk_frame_container0)  # 锐化，考虑做成滑块
         self.tk_scale_Smooth = self.__tk_scale_Smooth(self.tk_frame_container0)  # 平滑，同上
+
+        self.temperature_slider = Scale(self.tk_frame_container0, from_=0, to=200, orient=tk.HORIZONTAL, label="色温",
+                                        command=self.adjust_temperature, length=200, )
+        self.temperature_slider.set(100)
+        self.temperature_slider.place(x=202, y=8, width=150, height=80)
+
+        self.label_hue_slider = Label(self.tk_frame_container0, text="色调", anchor="center", )
+        self.label_hue_slider.place(x=252, y=80, width=50, height=30)
+        self.hue_slider = Scale(self.tk_frame_container0, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
+                                command=self.adjust_hue
+                                )
+        self.hue_slider.place(x=202, y=108, width=150, height=50)
+
         self.tk_button_Histogram_equalization = self.__tk_button_Histogram_equalization(self.tk_frame_container0)
         self.tk_label_saturation = self.__tk_label_saturation(self.tk_frame_container0)
         self.tk_scale_saturation = self.__tk_scale_saturation(self.tk_frame_container0)
@@ -67,29 +83,90 @@ class WinGUI(Tk):
         self.canvas = self.__tk_canvas_image(self)
         self.init_canvas = self.canvas
 
+    def adjust_temperature_1(self, temperature):
+        original_image = self.image_back.convert("RGB")
+        r, g, b = original_image.split()
+        print(temperature)
+
+        # 避免除以零错误
+        adjusted_b = b.point(lambda p: p * (1 / temperature) if temperature != 0 else p)
+
+        # 调整红色通道
+        adjusted_r = r.point(lambda p: p * temperature)
+
+        # 合并通道
+        adjusted_image = Image.merge("RGB", (adjusted_r, g, adjusted_b))
+
+        return adjusted_image
+
+    def adjust_temperature(self,value,evt=None):
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        if hasattr(self, 'image_back') and self.image is not None:
+            temperature = float(value) / 100.0
+
+            # 避免除以零错误
+            temperature = max(temperature, 0.001)
+
+            self.image = self.adjust_temperature_1(temperature)
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
+
+
+    def adjust_hue(self, evt=None):
+        if self.last_op != inspect.currentframe().f_code.co_name:
+            self.image_back = self.image
+        # 调整亮度功能
+        if hasattr(self, 'image_back') and self.image is not None:
+            hue_value = self.hue_slider.get()
+            print(hue_value)
+
+            origin_image = cv2.imread(self.file_path)
+
+            # 转换图片颜色空间为HSV
+            hsv_image = cv2.cvtColor(origin_image, cv2.COLOR_BGR2HSV)
+
+            # 调整色调
+            hsv_image[:, :, 0] += hue_value
+
+            # 调整色温
+            hsv_image[:, :, 1] = np.clip(hsv_image[:, :, 1] + 0, 0, 255)
+
+            # 转换回BGR颜色空间
+            bgr_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGR)
+
+            # 将OpenCV图像转换为PIL图像
+            self.image = Image.fromarray(cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB))
+            self.adjust_image_size()
+
+            # 将PIL图像转换为Tkinter图像
+            self.show_image(flag=1)
+            self.last_op = inspect.currentframe().f_code.co_name
+
     def load_image(self, evt=None, flag=0):
         self.crop_canvas.place(x=384, y=78, width=960, height=960)
         self.canvas.place(x=384, y=78, width=960, height=960)
 
         # 弹出文件选择对话框
-        file_path = filedialog.askopenfilename()
+        self.file_path = filedialog.askopenfilename()
 
-        if file_path:
+        if self.file_path:
             if flag == 0:
                 # 打开并调整图片大小以适应画布
                 self.image_stack = []
-                self.image = Image.open(file_path)
+                self.image = Image.open(self.file_path)
                 self.adjust_image_size()
                 self.init_img = self.image  # 保持原图不变
                 self.image_stack.append(self.image)
                 self.show_image()
             else:
-                self.watermark_image = Image.open(file_path)
+                self.watermark_image = Image.open(self.file_path)
                 self.watermark_image_back = self.watermark_image.copy()
                 self.adjust_image_size(flag=1)
                 self.watermark_photo = ImageTk.PhotoImage(self.watermark_image)
                 self.tk_canvas_watermark.create_image(0, 0, anchor=tk.NW, image=self.watermark_photo)
                 self.tk_canvas_watermark.create_image(0, 0, anchor=tk.NW, image=self.watermark_photo)
+            self.image_path_label.config(text="当前图片路径：" + self.file_path)
 
     def show_image(self, evt=None, flag=0, refresh=0):
         print("sqa")
@@ -127,10 +204,6 @@ class WinGUI(Tk):
         else:
             self.new_height = canvas_height
             self.new_width = int((canvas_height / original_height) * original_width)
-
-        print("init")
-        print(self.new_width)
-        print(self.new_height)
 
         # 使用thumbnail方法调整图像大小
         if flag == 1:
@@ -306,7 +379,7 @@ class WinGUI(Tk):
 
     def __tk_button_Histogram_equalization(self, parent):
         btn = Button(parent, text="直方图均衡化", takefocus=False, )
-        btn.place(x=239, y=131, width=88, height=30)
+        btn.place(x=239, y=181, width=88, height=30)
         return btn
 
     def __tk_label_saturation(self, parent):
@@ -504,9 +577,9 @@ class Win(WinGUI):
 
     def _adjust_exposure(self, img, b):
         # 曝光度调整 参数 b: 0~100
-        print("pre",b)
+        print("pre", b)
         b = np.float32(b - 50) / 20.0
-        print("pro",b)
+        print("pro", b)
         res = img.astype(np.float32)
         print(pow(2, b))
         res = res * pow(2, b)
