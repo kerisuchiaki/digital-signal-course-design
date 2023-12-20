@@ -367,4 +367,3 @@ if __name__ == "__main__":
     app = ImageProcessorApp(root)
     root.mainloop()
 
-    在之前的代码增加这个功能
