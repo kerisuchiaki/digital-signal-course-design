@@ -3,18 +3,15 @@ import tkinter as tk
 from tkinter import filedialog, colorchooser
 import colorsys
 
-original_image = None
-
 
 def update_color(color=None):
-    hsl_image = original_image
+    hsl_image = original_image.copy()
     # 将图像转换为HSL颜色空间
 
     # 获取滑块的值
-    hue = hue_scale.get()  # 将0-100的值转换为0-360的角度
+    hue = hue_scale.get() * 3.6  # 将0-100的值转换为0-360的角度
     saturation = saturation_scale.get() / 100.0
     lightness = lightness_scale.get() / 100.0
-    print(hue,saturation,lightness)
 
     # 针对每个像素进行HSL调整
     pixels = hsl_image.load()
@@ -34,21 +31,14 @@ def update_color(color=None):
                     continue
                 print("-----------")
                 print(h, l, s)
-                adjusted_h = hue/360.0 + h if hue_checkbox_var.get() else h
-                print(adjusted_h)
-
-                if adjusted_h <= 0: adjusted_h += 1
-                if adjusted_h >= 1: adjusted_h -= 1
-                adjusted_s = saturation + s if saturation_checkbox_var.get() else s
-                if adjusted_s <= 0: adjusted_s = 0
-                if adjusted_s >= 1: adjusted_s = 1
-                adjusted_l = lightness + l if lightness_checkbox_var.get() else l
-                if adjusted_l <= 0: adjusted_l = 0
-                if adjusted_l >= 1: adjusted_l = 1
+                adjusted_h = hue if hue_checkbox_var.get() else h
+                print(saturation_checkbox_var.get())
+                adjusted_s = saturation if saturation_checkbox_var.get() else s
+                adjusted_l = lightness if lightness_checkbox_var.get() else l
                 print("***************")
 
                 print(adjusted_h, adjusted_s, adjusted_l)
-                adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h , adjusted_l, adjusted_s)
+                adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h / 360.0, adjusted_l, adjusted_s)
 
                 print(adjusted_r, adjusted_g, adjusted_b)
 
@@ -62,6 +52,7 @@ def update_color(color=None):
 
     # 将调整后的图像显示在画布上
     print("world")
+    # original_image=hsl_image  #奇怪的BUG，待研究当加了这句就会使得上一句出现未解析引用
     photo = ImageTk.PhotoImage(hsl_image)
     canvas.create_image(0, 0, anchor=tk.NW, image=photo)
     canvas.image = photo
@@ -99,17 +90,17 @@ canvas.pack()
 # 创建滑块和标签
 hue_label = tk.Label(root, text='Hue')
 hue_label.pack()
-hue_scale = tk.Scale(root, from_=-30, to=30, orient='horizontal')
+hue_scale = tk.Scale(root, from_=0, to=100, orient='horizontal')
 hue_scale.pack()
 
 saturation_label = tk.Label(root, text='Saturation')
 saturation_label.pack()
-saturation_scale = tk.Scale(root, from_=-100, to=100, orient='horizontal')
+saturation_scale = tk.Scale(root, from_=0, to=100, orient='horizontal')
 saturation_scale.pack()
 
 lightness_label = tk.Label(root, text='Lightness')
 lightness_label.pack()
-lightness_scale = tk.Scale(root, from_=-100, to=100, orient='horizontal')
+lightness_scale = tk.Scale(root, from_=0, to=100, orient='horizontal')
 lightness_scale.pack()
 
 # 创建复选框

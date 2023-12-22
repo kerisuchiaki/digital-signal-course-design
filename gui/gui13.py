@@ -1,7 +1,7 @@
-
+import colorsys
 import inspect
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog, colorchooser
 # from tkinter.ttk import *
 # del Scale
 import tkinter as tk
@@ -57,14 +57,27 @@ class WinGUI(Tk):
 
         self.tk_button_Histogram_equalization = self.__tk_button_Histogram_equalization(self.tk_frame_container0)
         self.tk_label_saturation = self.__tk_label_saturation(self.tk_frame_container0)
-        self.tk_scale_saturation = self.__tk_scale_saturation(self.tk_frame_container0)
+        self.tk_scale_saturation_alone = self.__tk_scale_saturation(self.tk_frame_container0)
+        # HSL
+
         self.tk_frame_container1 = self.__tk_frame_container1(self.tk_tabs_option_2)
-        self.tk_label_Hue = self.__tk_label_Hue(self.tk_frame_container1)
         self.tk_scale_Hue = self.__tk_scale_Hue(self.tk_frame_container1)
-        self.tk_label_Saturation = self.__tk_label_Saturation(self.tk_frame_container1)
         self.tk_scale_Saturation = self.__tk_scale_Saturation(self.tk_frame_container1)
-        self.tk_label_lightness = self.__tk_label_lightness(self.tk_frame_container1)
         self.tk_scale_lightness = self.__tk_scale_lightness(self.tk_frame_container1)
+
+        # 创建选择颜色按钮
+        select_color_button = tk.Button(self.tk_frame_container1, text='Select Color', command=self.select_color)
+        select_color_button.place(x=13, y=351, width=90, height=30)
+
+        self.apply_button = tk.Button(self.tk_frame_container1, text='Apply', command=self.update_image)
+        self.apply_button.place(x=13, y=401, width=50, height=30)
+
+        #
+        # # 创建颜色预览标签
+        # self.color_preview = tk.Label(self.tk_frame_container1, width=20, height=10)
+        # self.color_preview.config(bg='#%02x%02x%02x' % (255, 0, 0))
+        # self.color_preview.pack()
+
         self.tk_button_rotate = self.__tk_button_rotate(self.tk_tabs_option_0)
         self.tk_button_trim = self.__tk_button_trim(self.tk_tabs_option_0)
         self.tk_input_text = self.__tk_input_text(self.tk_tabs_option_3)
@@ -78,6 +91,144 @@ class WinGUI(Tk):
         self.crop_canvas.pack_forget()
         self.canvas = self.__tk_canvas_image(self)
         self.init_canvas = self.canvas
+
+    def update_image(self, color=None):
+        print("debug")
+        color = self.color
+        hsl_image = self.image.copy()
+        # 将图像转换为HSL颜色空间
+
+        # 获取滑块的值
+        hue = self.tk_scale_Hue.get()  # 将0-100的值转换为0-360的角度
+        saturation = self.tk_scale_Saturation.get() / 100.0
+        lightness = self.tk_scale_lightness.get() / 100.0
+        print(hue, saturation, lightness)
+
+        # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        # 针对每个像素进行HSL调整
+
+        # ------------
+
+        if color:
+            # 将选定的颜色转换为HSL
+            rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
+            print(rr, gg, bb)
+
+            img_array = np.array(self.image)
+            dst = np.zeros_like(img_array)
+
+            # 将图像数组归一化到0-1范围
+            img_array_norm = img_array / 255.0
+
+            # 将选定颜色转换为HSL
+            h_tmp, l_tmp, s_tmp = colorsys.rgb_to_hls(rr / 255.0, gg / 255.0, bb / 255.0)
+
+            for channel in range(3):
+                # 提取当前通道的像素值
+                channel_pixels = img_array_norm[:, :, channel]
+
+                # 创建一个布尔掩码，指示与选定颜色匹配的像素
+                mask = np.logical_and.reduce(
+                    (img_array[:, :, 0] == rr, img_array[:, :, 1] == gg, img_array[:, :, 2] == bb))
+
+                # 对满足条件的像素进行批量处理
+                h, l, s = np.where(mask, h_tmp, channel_pixels), np.where(mask, l_tmp, channel_pixels), np.where(mask,
+                                                                                                                 s_tmp,
+                                                                                                                 channel_pixels)
+
+                # 进行HSL调整
+                adjusted_h = (hue / 360.0 + h) % 1.0
+                adjusted_s = np.clip(saturation + s, 0, 1)
+                adjusted_l = np.clip(lightness + l, 0, 1)
+
+                # 将调整后的HSL转换为RGB
+                hls_to_rgb_vectorized = np.vectorize(colorsys.hls_to_rgb)
+                adjusted_r, adjusted_g, adjusted_b = hls_to_rgb_vectorized(adjusted_h, adjusted_l, adjusted_s)
+
+                # 将处理后的像素值放回图像数组
+                img_array[:, :, channel] = np.where(mask, adjusted_r, img_array[:, :, channel])
+                dst[:, :, channel] = img_array[:, :, channel]
+
+        img2 = Image.fromarray(np.uint8(dst * 255))
+        self.image = img2
+        self.show_image()
+        return
+
+        # --------
+
+        # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+        pixels = self.image.load()
+        width, height = hsl_image.size
+        if color:
+            print("hello")
+            # 将选定的颜色转换为HSL
+            rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
+            print(rr, gg, bb)
+            for x in range(width):
+                for y in range(height):
+                    print(x, y)
+                    r, g, b = pixels[x, y]
+                    h, l, s = None, None, None
+                    if r == rr and g == gg and b == bb:
+                        h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+                    else:
+                        continue
+                    print("-----------")
+                    print(h, l, s)
+                    adjusted_h = hue / 360.0 + h
+                    print(adjusted_h)
+
+                    if adjusted_h <= 0: adjusted_h += 1
+                    if adjusted_h >= 1: adjusted_h -= 1
+                    adjusted_s = saturation + s
+                    if adjusted_s <= 0: adjusted_s = 0
+                    if adjusted_s >= 1: adjusted_s = 1
+                    adjusted_l = lightness + l
+                    if adjusted_l <= 0: adjusted_l = 0
+                    if adjusted_l >= 1: adjusted_l = 1
+                    print("***************")
+
+                    print(adjusted_h, adjusted_s, adjusted_l)
+                    adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
+
+                    print(adjusted_r, adjusted_g, adjusted_b)
+
+                    pixels[x, y] = (
+                        int(adjusted_r * 255),
+                        int(adjusted_g * 255),
+                        int(adjusted_b * 255)
+                    )
+        else:
+            return
+
+        pixels = self.image.load()
+        print("debug")
+        width, height = self.image.size
+        for x in range(width):
+            for y in range(height):
+                print(x, y)
+                r, g, b = pixels[x, y]
+                print(r, g, b)
+
+        # 将调整后的图像显示在画布上
+        print("world")
+        self.image = hsl_image  # 取消注释此行以更新self.image的值
+
+        photo = ImageTk.PhotoImage(hsl_image)
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+        self.canvas.image = photo
+        self.show_image()
+
+    def select_color(self, evt=None, color=None):
+        # 打开颜色选择器对话框
+        self.color = colorchooser.askcolor()[1]
+
+        print(self.color)
+
+        if self.color:
+            print("select a color")
+            # update_color(color)
 
     def adjust_temperature_1(self, temperature):
         original_image = self.image_back.convert("RGB")
@@ -164,7 +315,8 @@ class WinGUI(Tk):
             self.image_path_label.config(text="当前图片路径：" + self.file_path)
 
     def show_image(self, evt=None, flag=0, refresh=0):
-        print("sqa")
+
+        print("show_image")
         if hasattr(self, 'image_back') and hasattr(self, 'image'):
             # 清除之前的内容
             self.canvas.delete("all")
@@ -383,9 +535,8 @@ class WinGUI(Tk):
         return label
 
     def __tk_scale_saturation(self, parent):
-        scale = Scale(parent, from_=0, to=200, orient=tk.HORIZONTAL, length=200,
+        scale = Scale(parent, from_=-100, to=100, orient=tk.HORIZONTAL, length=200,
                       )
-        scale.set(100)
         scale.place(x=0, y=412, width=150, height=50)
         return scale
 
@@ -399,38 +550,21 @@ class WinGUI(Tk):
         frame.place(x=0, y=0, width=347, height=482)
         return frame
 
-    def __tk_scale_Saturation(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=13, y=342, width=150, height=50)
-        scale.set(100)
+    def __tk_scale_lightness(self, parent):
+        scale = Scale(parent, orient=HORIZONTAL, label="lightness", from_=-100, to=100)
+        scale.place(x=13, y=251, width=150, height=150)
         return scale
-
-    def __tk_label_Hue(self, parent):
-        label = Label(parent, text="H", anchor="center", )
-        label.place(x=62, y=0, width=50, height=30)
-        return label
 
     def __tk_scale_Hue(self, parent):
-        scale = Scale(parent, from_=0, to=360, orient=tk.HORIZONTAL, length=200,
+        scale = Scale(parent, from_=-30, to=30, orient=tk.HORIZONTAL, length=200, label="Hue"
                       )
-        scale.place(x=13, y=56, width=143, height=50)
+        scale.place(x=13, y=0, width=143, height=150)
         return scale
 
-    def __tk_label_Saturation(self, parent):
-        label = Label(parent, text="S", anchor="center", )
-        label.place(x=62, y=127, width=50, height=30)
-        return label
-
-    def __tk_scale_lightness(self, parent):
-        scale = Scale(parent, orient=HORIZONTAL, )
-        scale.place(x=11, y=189, width=150, height=50)
-        scale.set(100)
+    def __tk_scale_Saturation(self, parent):
+        scale = Scale(parent, orient=HORIZONTAL, label="Saturation", from_=-100, to=100)
+        scale.place(x=11, y=129, width=150, height=150)
         return scale
-
-    def __tk_label_lightness(self, parent):
-        label = Label(parent, text="L", anchor="center", )
-        label.place(x=64, y=251, width=50, height=50)
-        return label
 
     def __tk_button_rotate(self, parent):
         btn = Button(parent, text="旋转", takefocus=False, )
@@ -633,7 +767,7 @@ class Win(WinGUI):
             print(sharpen_value)
 
             if sharpen_value < 0.1:
-                self.image=self.image_back
+                self.image = self.image_back
                 self.show_image(flag=1)
                 self.last_op = inspect.currentframe().f_code.co_name
                 return
@@ -687,7 +821,7 @@ class Win(WinGUI):
             self.image_back = self.image
         # 饱和度调整功能
         if hasattr(self, 'image'):
-            saturation_factor = self.tk_scale_saturation.get() / 100.0
+            saturation_factor = self.tk_scale_saturation_alone.get() / 100.0
             saturation_adjusted = ImageEnhance.Color(self.init_img).enhance(saturation_factor)
             self.image = saturation_adjusted
             self.show_image(flag=1)
@@ -697,6 +831,58 @@ class Win(WinGUI):
         print("<Configure>事件未处理:", evt)
 
     def adjust_H(self, evt):
+        # 将图像转换为HSL颜色空间
+
+        # # 获取滑块的值
+        # hue = hue_scale.get()  # 将0-100的值转换为0-360的角度
+        # saturation = saturation_scale.get() / 100.0
+        # lightness = lightness_scale.get() / 100.0
+        # print(hue, saturation, lightness)
+        #
+        # # 针对每个像素进行HSL调整
+        # pixels = hsl_image.load()
+        # width, height = original_image.size
+        # if color:
+        #     print("hello")
+        #     # 将选定的颜色转换为HSL
+        #     rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
+        #     for x in range(width):
+        #         for y in range(height):
+        #             print(x, y)
+        #             r, g, b = pixels[x, y]
+        #             h, l, s = None, None, None
+        #             if r == rr and g == gg and b == bb:
+        #                 h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+        #             else:
+        #                 continue
+        #             print("-----------")
+        #             print(h, l, s)
+        #             adjusted_h = hue / 360.0 + h if hue_checkbox_var.get() else h
+        #             print(adjusted_h)
+        #
+        #             if adjusted_h <= 0: adjusted_h += 1
+        #             if adjusted_h >= 1: adjusted_h -= 1
+        #             adjusted_s = saturation + s if saturation_checkbox_var.get() else s
+        #             if adjusted_s <= 0: adjusted_s = 0
+        #             if adjusted_s >= 1: adjusted_s = 1
+        #             adjusted_l = lightness + l if lightness_checkbox_var.get() else l
+        #             if adjusted_l <= 0: adjusted_l = 0
+        #             if adjusted_l >= 1: adjusted_l = 1
+        #             print("***************")
+        #
+        #             print(adjusted_h, adjusted_s, adjusted_l)
+        #             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
+        #
+        #             print(adjusted_r, adjusted_g, adjusted_b)
+        #
+        #             pixels[x, y] = (
+        #                 int(adjusted_r * 255),
+        #                 int(adjusted_g * 255),
+        #                 int(adjusted_b * 255)
+        #             )
+        # else:
+        #     return
+
         print("HHHHH")
 
     def adjust_S(self, evt):
@@ -975,7 +1161,7 @@ class Win(WinGUI):
         self.tk_scale_Sharpen.bind('<B1-Motion>', self.sharpen)
         self.tk_scale_Smooth.bind('<B1-Motion>', self.smooth)
         self.tk_button_Histogram_equalization.bind('<Button-1>', self.adjust_equalize)
-        self.tk_scale_saturation.bind('<B1-Motion>', self.adjust_saturation)
+        self.tk_scale_saturation_alone.bind('<B1-Motion>', self.adjust_saturation)
         self.tk_scale_Saturation.bind('<Configure>', self.adjust_L)
         self.tk_scale_Hue.bind('<B1-Motion>', self.adjust_H)
         self.tk_scale_lightness.bind('<Configure>', self.adjust_S)
