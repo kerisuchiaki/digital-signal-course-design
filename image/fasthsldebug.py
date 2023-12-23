@@ -17,6 +17,8 @@ image_item = canvas.create_image(0, 0, anchor=tk.NW, image=photo)
 
 
 def update_image(color):
+    global img
+
     if color:
         # 将图像转换为numpy数组
         img_array = np.array(img)
@@ -33,14 +35,11 @@ def update_image(color):
         # 将修改后的numpy数组转换回Image对象
         modified_img = Image.fromarray(img_array)
 
-        global img
-        # python的特点就是可以不声明而赋值，或者说赋值即声明，导致函数内部不知道内部出现的和外面的同名变量是同一个，会将内部的同名变量认为是新定义的
-        #
         img = modified_img
 
         # 更新画布上的图片
         photo = ImageTk.PhotoImage(modified_img)
-        canvas.itemconfig(image_item, image=photo)
+        canvas.create_image(0, 0, anchor=tk.NW, image=photo)
         canvas.image = photo
 
 

@@ -17,8 +17,6 @@ class WinGUI(Tk):
     def __init__(self):
         super().__init__()
         # 颜色
-        self.image = None
-        img = None
         self.color = tk.StringVar()
         self.color.set('red')
         colors = {
@@ -116,7 +114,7 @@ class WinGUI(Tk):
             print("No color selected.")
 
     def HSL_update_image(self, color=None):
-        img = self.image_back
+        print("debug")
         color = self.color
         hsl_image = self.image_back.copy()
         # 将图像转换为HSL颜色空间
@@ -180,12 +178,27 @@ class WinGUI(Tk):
 
         # 使用numpy快速遍历
         if color:
+
             start_time = time.time()
             # 将图像转换为numpy数组
-            img_array = np.array(img)
+            img_array = np.array(self.image)
             # 将选定的颜色转换为HSL
             rr, gg, bb = None, None, None
             color_str = color.get()
+            # print(color_str)
+            # if color_str == "#FF0000":
+            #     rr, gg, bb = 255, 0, 0
+            # elif color_str == "#00FF00":
+            #     rr, gg, bb = 0, 255, 0
+            # elif color_str == "#0000FF":
+            #     rr, gg, bb = 0, 0, 255
+            # elif color_str == "#FFFF00":
+            #     rr, gg, bb = 0, 255, 0
+            # elif color_str == "#00FFFF":
+            #     rr, gg, bb = 0, 255, 255
+            # elif color_str == "#FF00FF":
+            #     rr, gg, bb = 255, 0, 255
+
             colors_rgb = {
                 "#FF0000": (255, 0, 0),  # Red
                 "#00FF00": (0, 255, 0),  # Green
@@ -194,9 +207,18 @@ class WinGUI(Tk):
                 "#00FFFF": (0, 255, 255),  # Cyan
                 "#FF00FF": (255, 0, 255)  # Magenta
             }
+
             if color_str in colors_rgb:
                 rr, gg, bb = colors_rgb[color_str]
+
+            print(rr, gg, bb)
+
+            img_array = np.array(self.image_back)
             dst = np.zeros_like(img_array)
+            dst = np.zeros_like(img_array)
+
+            # 将图像数组归一化到0-1范围
+            img_array_norm = img_array / 255.0
 
             # 获取纯红像素点的条件
             red_condition = (img_array[:, :, 0] == rr) & (img_array[:, :, 1] == gg) & (img_array[:, :, 2] == bb)
@@ -212,23 +234,24 @@ class WinGUI(Tk):
             if adjusted_l >= 1: adjusted_l = 1
             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
             print("r=", adjusted_r * 255, "g=", adjusted_g * 255, "b=", adjusted_b * 255)
+
             # 将纯红像素点变为白色
             img_array[red_condition] = [adjusted_r * 255, adjusted_g * 255, adjusted_b * 255]
 
             # 将修改后的numpy数组转换回Image对象
             modified_img = Image.fromarray(img_array)
-            # print("开始----------------------->debug")
-            # img_array = np.asarray(modified_img)
-            # shape = img_array.shape
-            # height = shape[0]
-            # width = shape[1]
-            # print(height, width)
-            # dst = np.zeros((height, width, 3))
-            # for x in range(0, height):
-            #     for y in range(0, width):
-            #         (r, g, b) = img_array[x, y]
-            #         print(r, g, b)
-            img = modified_img
+            print("开始----------------------->debug")
+            img_array = np.asarray(modified_img)
+            shape = img_array.shape
+            height = shape[0]
+            width = shape[1]
+            print(height, width)
+            dst = np.zeros((height, width, 3))
+            for x in range(0, height):
+                for y in range(0, width):
+                    (r, g, b) = img_array[x, y]
+                    print(r, g, b)
+            self.image = modified_img
             end_time = time.time()
             elapsed_time = end_time - start_time
             print(f"Method 2: Elapsed Time = {elapsed_time:.6f} seconds")
@@ -236,8 +259,10 @@ class WinGUI(Tk):
             photo = ImageTk.PhotoImage(modified_img)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
             self.canvas.image = photo
-            # self.debug_test()
-            # self.show_image()
+
+
+
+            self.show_image()
             return
 
         # --------
@@ -416,13 +441,6 @@ class WinGUI(Tk):
                 self.photo = ImageTk.PhotoImage(self.image)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
             self.crop_canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
-
-    def debug_test(self, evt=None, flag=0, refresh=0):
-
-        self.canvas.delete("all")
-        self.image_back = self.image
-        self.photo = ImageTk.PhotoImage(self.image)
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def adjust_image_size(self, flag=0):
         # 获取画布的大小
@@ -1205,9 +1223,9 @@ class Win(WinGUI):
         self.tk_scale_Smooth.bind('<B1-Motion>', self.smooth)
         self.tk_button_Histogram_equalization.bind('<Button-1>', self.adjust_equalize)
         self.tk_scale_saturation_alone.bind('<B1-Motion>', self.adjust_saturation)
-        self.tk_scale_Saturation.bind('<B1-Motion>', self.HSL_update_image)
+        self.tk_scale_Saturation.bind('<Configure>', self.adjust_L)
         self.tk_scale_Hue.bind('<B1-Motion>', self.HSL_update_image)
-        self.tk_scale_lightness.bind('<B1-Motion>', self.HSL_update_image)
+        self.tk_scale_lightness.bind('<Configure>', self.adjust_S)
         self.tk_button_rotate.bind('<Button-1>', self.rotate_image)
         self.tk_button_trim.bind('<Button-1>', self.crop_image)
         self.tk_button_add.bind('<Button-1>', self.add_text)
