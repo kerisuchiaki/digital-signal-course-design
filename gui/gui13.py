@@ -249,9 +249,9 @@ class WinGUI(Tk):
             self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
             self.canvas.image = photo
 
-            print("开始debug")
-            img_array=np.asarray(self.image)
-            shape=img_array.shape
+            print("开始----------------------->debug")
+            img_array = np.asarray(self.image)
+            shape = img_array.shape
             height = shape[0]
             width = shape[1]
             print(height, width)
@@ -259,7 +259,7 @@ class WinGUI(Tk):
             for x in range(0, height):
                 for y in range(0, width):
                     (r, g, b) = img_array[x, y]
-                    print(r,g,b)
+                    print(r, g, b)
 
             self.show_image()
             return

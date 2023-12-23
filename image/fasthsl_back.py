@@ -52,6 +52,8 @@ def update_image(img, color):
         canvas.create_image(0, 0, anchor=tk.NW, image=photo)
         canvas.image = photo
 
+        # 好吧终于发现了一个BUG，能用但是只能用一次，快是有代价的
+
 
 
 def select_color():
