@@ -1,6 +1,5 @@
 import colorsys
 import inspect
-import time
 from tkinter import *
 from tkinter import filedialog, colorchooser
 # from tkinter.ttk import *
@@ -16,18 +15,6 @@ from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageGrab
 class WinGUI(Tk):
     def __init__(self):
         super().__init__()
-        # 颜色
-        self.color = tk.StringVar()
-        self.color.set('red')
-        colors = {
-            "Red": "#FF0000",
-            "Green": "#00FF00",
-            "Blue": "#0000FF",
-            "Yellow": "#FFFF00",
-            "Cyan": "#00FFFF",
-            "Magenta": "#FF00FF"
-        }
-
         self.file_path = None
         self.image_back = None
         self.image_back_last = None
@@ -78,20 +65,18 @@ class WinGUI(Tk):
         self.tk_scale_Saturation = self.__tk_scale_Saturation(self.tk_frame_container1)
         self.tk_scale_lightness = self.__tk_scale_lightness(self.tk_frame_container1)
 
-        i = 0
-        for color_text, hex_code in colors.items():
-            radiobutton = tk.Radiobutton(self.tk_frame_container1, bg=hex_code, text=color_text,
-                                         variable=self.color, value=hex_code, command=self.select_color)
-            # radiobutton.bind("<Button-1>", select_color) #奇怪的BUG，会出现一开始就调用一次select_color并且之后的单击单选框时都只会输出上次单击的单选框的值
-            radiobutton.place(x=239, y=35 + i * 100, width=80, height=30)
-            i += 1
-
         # 创建选择颜色按钮
         select_color_button = tk.Button(self.tk_frame_container1, text='Select Color', command=self.select_color)
         select_color_button.place(x=13, y=351, width=90, height=30)
 
         self.apply_button = tk.Button(self.tk_frame_container1, text='Apply', command=self.update_image)
         self.apply_button.place(x=13, y=401, width=50, height=30)
+
+        #
+        # # 创建颜色预览标签
+        # self.color_preview = tk.Label(self.tk_frame_container1, width=20, height=10)
+        # self.color_preview.config(bg='#%02x%02x%02x' % (255, 0, 0))
+        # self.color_preview.pack()
 
         self.tk_button_rotate = self.__tk_button_rotate(self.tk_tabs_option_0)
         self.tk_button_trim = self.__tk_button_trim(self.tk_tabs_option_0)
@@ -106,12 +91,6 @@ class WinGUI(Tk):
         self.crop_canvas.pack_forget()
         self.canvas = self.__tk_canvas_image(self)
         self.init_canvas = self.canvas
-
-    def select_color(self, evt=None):
-        if self.color:
-            print("Selected color:", self.color.get())
-        else:
-            print("No color selected.")
 
     def update_image(self, color=None):
         print("debug")
@@ -128,206 +107,129 @@ class WinGUI(Tk):
         # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         # 针对每个像素进行HSL调整
 
-        # 使用for循环遍历像素
         # ------------
-        # if color:
-        #     start_time = time.time()
-        #     # 将选定的颜色转换为HSL
-        #     rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
-        #     print(rr, gg, bb)
-        #     img_array = np.array(self.image)  # 把图像转成数组格式img = np.asarray(image)
-        #     shape = img_array.shape
-        #     print(img_array.shape)
-        #     height = shape[0]
-        #     width = shape[1]
-        #     print(height, width)
-        #     dst = np.zeros((height, width, 3))
-        #     for x in range(0, height):
-        #         for y in range(0, width):
-        #             (r, g, b) = img_array[x, y]
-        #             h, l, s = None, None, None
-        #             img_array[x, y] = (r, g, b)
-        #             dst[x, y] = img_array[x, y]
-        #             if r == rr and g == gg and b == bb:
-        #                 h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
-        #             else:
-        #                 continue
-        #             adjusted_h = hue / 360.0 + h
-        #             if adjusted_h <= 0: adjusted_h += 1
-        #             if adjusted_h >= 1: adjusted_h -= 1
-        #             adjusted_s = saturation + s
-        #             if adjusted_s <= 0: adjusted_s = 0
-        #             if adjusted_s >= 1: adjusted_s = 1
-        #             adjusted_l = lightness + l
-        #             if adjusted_l <= 0: adjusted_l = 0
-        #             if adjusted_l >= 1: adjusted_l = 1
-        #             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
-        #             r = int(adjusted_r * 255)
-        #             g = int(adjusted_g * 255)
-        #             b = int(adjusted_b * 255)
-        #             img_array[x, y] = (r, g, b)
-        #             dst[x, y] = img_array[x, y]
-        # img2 = Image.fromarray(np.uint8(dst))
-        # self.image = img2
-        # end_time = time.time()
-        # elapsed_time = end_time - start_time
-        # print(f"Method 1: Elapsed Time = {elapsed_time:.6f} seconds")
-        # # Method 1: Elapsed Time = 0.404986 seconds
-        # self.show_image()
-        # return
 
-        # 使用numpy快速遍历
         if color:
-
-            start_time = time.time()
-            # 将图像转换为numpy数组
-            img_array = np.array(self.image)
             # 将选定的颜色转换为HSL
-            rr, gg, bb=None,None,None
-            color_str = color.get()
-            # print(color_str)
-            # if color_str == "#FF0000":
-            #     rr, gg, bb = 255, 0, 0
-            # elif color_str == "#00FF00":
-            #     rr, gg, bb = 0, 255, 0
-            # elif color_str == "#0000FF":
-            #     rr, gg, bb = 0, 0, 255
-            # elif color_str == "#FFFF00":
-            #     rr, gg, bb = 0, 255, 0
-            # elif color_str == "#00FFFF":
-            #     rr, gg, bb = 0, 255, 255
-            # elif color_str == "#FF00FF":
-            #     rr, gg, bb = 255, 0, 255
-
-            colors_rgb = {
-                "#FF0000": (255, 0, 0),  # Red
-                "#00FF00": (0, 255, 0),  # Green
-                "#0000FF": (0, 0, 255),  # Blue
-                "#FFFF00": (255, 255, 0),  # Yellow
-                "#00FFFF": (0, 255, 255),  # Cyan
-                "#FF00FF": (255, 0, 255)  # Magenta
-            }
-
-            if color_str in colors_rgb:
-                rr, gg, bb = colors_rgb[color_str]
-
+            rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
             print(rr, gg, bb)
 
             img_array = np.array(self.image)
-            dst = np.zeros_like(img_array)
             dst = np.zeros_like(img_array)
 
             # 将图像数组归一化到0-1范围
             img_array_norm = img_array / 255.0
 
-            # 获取纯红像素点的条件
-            red_condition = (img_array[:, :, 0] == rr) & (img_array[:, :, 1] == gg) & (img_array[:, :, 2] == bb)
-            h, l, s = colorsys.rgb_to_hls(rr / 255, gg / 255, bb / 255)
-            adjusted_h = hue / 360.0 + h
-            if adjusted_h <= 0: adjusted_h += 1
-            if adjusted_h >= 1: adjusted_h -= 1
-            adjusted_s = saturation + s
-            if adjusted_s <= 0: adjusted_s = 0
-            if adjusted_s >= 1: adjusted_s = 1
-            adjusted_l = lightness + l
-            if adjusted_l <= 0: adjusted_l = 0
-            if adjusted_l >= 1: adjusted_l = 1
-            adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
-            print("******************")
-            print(adjusted_r * 255, adjusted_g * 255, adjusted_b * 255)
+            # 将选定颜色转换为HSL
+            h_tmp, l_tmp, s_tmp = colorsys.rgb_to_hls(rr / 255.0, gg / 255.0, bb / 255.0)
 
-            # 将纯红像素点变为白色
-            img_array[red_condition] = [adjusted_r * 255, adjusted_g * 255, adjusted_b * 255]
+            for channel in range(3):
+                # 提取当前通道的像素值
+                channel_pixels = img_array_norm[:, :, channel]
 
-            # 将修改后的numpy数组转换回Image对象
-            modified_img = Image.fromarray(img_array)
-            self.image = modified_img
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            print(f"Method 2: Elapsed Time = {elapsed_time:.6f} seconds")
-            # 将调整后的图像显示在画布上
-            photo = ImageTk.PhotoImage(modified_img)
-            self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
-            self.canvas.image = photo
+                # 创建一个布尔掩码，指示与选定颜色匹配的像素
+                mask = np.logical_and.reduce(
+                    (img_array[:, :, 0] == rr, img_array[:, :, 1] == gg, img_array[:, :, 2] == bb))
 
-            self.show_image()
-            return
+                # 对满足条件的像素进行批量处理
+                h, l, s = np.where(mask, h_tmp, channel_pixels), np.where(mask, l_tmp, channel_pixels), np.where(mask,
+                                                                                                                 s_tmp,
+                                                                                                                 channel_pixels)
+                print(h,s,l)
+
+                # 进行HSL调整
+                adjusted_h = (hue / 360.0 + h) % 1.0
+                adjusted_s = np.clip(saturation + s, 0, 1)
+                adjusted_l = np.clip(lightness + l, 0, 1)
+
+                # 将调整后的HSL转换为RGB
+                hls_to_rgb_vectorized = np.vectorize(colorsys.hls_to_rgb)
+                adjusted_r, adjusted_g, adjusted_b = hls_to_rgb_vectorized(adjusted_h, adjusted_l, adjusted_s)
+
+                # 将处理后的像素值放回图像数组
+                img_array[:, :, channel] = np.where(mask, adjusted_r, img_array[:, :, channel])
+                dst[:, :, channel] = img_array[:, :, channel]
+
+        img2 = Image.fromarray(np.uint8(dst * 255))
+        self.image = img2
+        self.show_image()
+        return
 
         # --------
 
         # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-        # 保留
-        # pixels = self.image.load()
-        # width, height = hsl_image.size
-        # if color:
-        #     print("hello")
-        #     # 将选定的颜色转换为HSL
-        #     rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
-        #     print(rr, gg, bb)
-        #     for x in range(width):
-        #         for y in range(height):
-        #             print(x, y)
-        #             r, g, b = pixels[x, y]
-        #             h, l, s = None, None, None
-        #             if r == rr and g == gg and b == bb:
-        #                 h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
-        #             else:
-        #                 continue
-        #             print("-----------")
-        #             print(h, l, s)
-        #             adjusted_h = hue / 360.0 + h
-        #             print(adjusted_h)
-        #
-        #             if adjusted_h <= 0: adjusted_h += 1
-        #             if adjusted_h >= 1: adjusted_h -= 1
-        #             adjusted_s = saturation + s
-        #             if adjusted_s <= 0: adjusted_s = 0
-        #             if adjusted_s >= 1: adjusted_s = 1
-        #             adjusted_l = lightness + l
-        #             if adjusted_l <= 0: adjusted_l = 0
-        #             if adjusted_l >= 1: adjusted_l = 1
-        #             print("***************")
-        #
-        #             print(adjusted_h, adjusted_s, adjusted_l)
-        #             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
-        #
-        #             print(adjusted_r, adjusted_g, adjusted_b)
-        #
-        #             pixels[x, y] = (
-        #                 int(adjusted_r * 255),
-        #                 int(adjusted_g * 255),
-        #                 int(adjusted_b * 255)
-        #             )
-        # else:
-        #     return
-        #
-        # pixels = self.image.load()
-        # print("debug")
-        # width, height = self.image.size
-        # for x in range(width):
-        #     for y in range(height):
-        #         print(x, y)
-        #         r, g, b = pixels[x, y]
-        #         print(r, g, b)
-        #
-        # # 将调整后的图像显示在画布上
-        # print("world")
-        # self.image = hsl_image  # 取消注释此行以更新self.image的值
-        #
-        # photo = ImageTk.PhotoImage(hsl_image)
-        # self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
-        # self.canvas.image = photo
-        # self.show_image()
 
-    # def select_color(self, evt=None, color=None):
-    #     # 打开颜色选择器对话框
-    #     self.color = colorchooser.askcolor()[1]
-    #
-    #     print(self.color)
-    #
-    #     if self.color:
-    #         print("select a color")
-    #         # update_color(color)
+        pixels = self.image.load()
+        width, height = hsl_image.size
+        if color:
+            print("hello")
+            # 将选定的颜色转换为HSL
+            rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
+            print(rr, gg, bb)
+            for x in range(width):
+                for y in range(height):
+                    print(x, y)
+                    r, g, b = pixels[x, y]
+                    h, l, s = None, None, None
+                    if r == rr and g == gg and b == bb:
+                        h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+                    else:
+                        continue
+                    print("-----------")
+                    print(h, l, s)
+                    adjusted_h = hue / 360.0 + h
+                    print(adjusted_h)
+
+                    if adjusted_h <= 0: adjusted_h += 1
+                    if adjusted_h >= 1: adjusted_h -= 1
+                    adjusted_s = saturation + s
+                    if adjusted_s <= 0: adjusted_s = 0
+                    if adjusted_s >= 1: adjusted_s = 1
+                    adjusted_l = lightness + l
+                    if adjusted_l <= 0: adjusted_l = 0
+                    if adjusted_l >= 1: adjusted_l = 1
+                    print("***************")
+
+                    print(adjusted_h, adjusted_s, adjusted_l)
+                    adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
+
+                    print(adjusted_r, adjusted_g, adjusted_b)
+
+                    pixels[x, y] = (
+                        int(adjusted_r * 255),
+                        int(adjusted_g * 255),
+                        int(adjusted_b * 255)
+                    )
+        else:
+            return
+
+        pixels = self.image.load()
+        print("debug")
+        width, height = self.image.size
+        for x in range(width):
+            for y in range(height):
+                print(x, y)
+                r, g, b = pixels[x, y]
+                print(r, g, b)
+
+        # 将调整后的图像显示在画布上
+        print("world")
+        self.image = hsl_image  # 取消注释此行以更新self.image的值
+
+        photo = ImageTk.PhotoImage(hsl_image)
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+        self.canvas.image = photo
+        self.show_image()
+
+    def select_color(self, evt=None, color=None):
+        # 打开颜色选择器对话框
+        self.color = colorchooser.askcolor()[1]
+
+        print(self.color)
+
+        if self.color:
+            print("select a color")
+            # update_color(color)
 
     def adjust_temperature_1(self, temperature):
         original_image = self.image_back.convert("RGB")
