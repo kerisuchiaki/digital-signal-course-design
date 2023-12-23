@@ -240,17 +240,8 @@ class WinGUI(Tk):
 
             # 将修改后的numpy数组转换回Image对象
             modified_img = Image.fromarray(img_array)
-            self.image = modified_img
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            print(f"Method 2: Elapsed Time = {elapsed_time:.6f} seconds")
-            # 将调整后的图像显示在画布上
-            photo = ImageTk.PhotoImage(modified_img)
-            self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
-            self.canvas.image = photo
-
             print("开始----------------------->debug")
-            img_array = np.asarray(self.image)
+            img_array = np.asarray(modified_img)
             shape = img_array.shape
             height = shape[0]
             width = shape[1]
@@ -260,6 +251,16 @@ class WinGUI(Tk):
                 for y in range(0, width):
                     (r, g, b) = img_array[x, y]
                     print(r, g, b)
+            self.image = modified_img
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Method 2: Elapsed Time = {elapsed_time:.6f} seconds")
+            # 将调整后的图像显示在画布上
+            photo = ImageTk.PhotoImage(modified_img)
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+            self.canvas.image = photo
+
+
 
             self.show_image()
             return
