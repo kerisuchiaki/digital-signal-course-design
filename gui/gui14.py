@@ -17,7 +17,6 @@ class WinGUI(Tk):
     def __init__(self):
         super().__init__()
         # 颜色
-        self.image = None
         self.color = tk.StringVar()
         self.color.set('red')
         colors = {
@@ -115,7 +114,6 @@ class WinGUI(Tk):
             print("No color selected.")
 
     def HSL_update_image(self, color=None):
-        # img = self.image_back
         color = self.color
         hsl_image = self.image_back.copy()
         # 将图像转换为HSL颜色空间
@@ -125,7 +123,6 @@ class WinGUI(Tk):
         saturation = self.tk_scale_Saturation.get() / 100.0
         lightness = self.tk_scale_lightness.get() / 100.0
         print("hue=", hue, "saturation=", saturation, "lightness=", lightness)
-        # 使用numpy快速遍历
         if color:
             start_time = time.time()
             # 将图像转换为numpy数组
@@ -143,8 +140,8 @@ class WinGUI(Tk):
             }
             if color_str in colors_rgb:
                 rr, gg, bb = colors_rgb[color_str]
+            img_array = np.array(self.image_back)
             dst = np.zeros_like(img_array)
-
             # 获取纯红像素点的条件
             red_condition = (img_array[:, :, 0] == rr) & (img_array[:, :, 1] == gg) & (img_array[:, :, 2] == bb)
             h, l, s = colorsys.rgb_to_hls(rr / 255, gg / 255, bb / 255)
@@ -158,22 +155,17 @@ class WinGUI(Tk):
             if adjusted_l <= 0: adjusted_l = 0
             if adjusted_l >= 1: adjusted_l = 1
             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
-            print("r=", adjusted_r * 255, "g=", adjusted_g * 255, "b=", adjusted_b * 255)
             # 将纯红像素点变为白色
             img_array[red_condition] = [adjusted_r * 255, adjusted_g * 255, adjusted_b * 255]
 
             # 将修改后的numpy数组转换回Image对象
             modified_img = Image.fromarray(img_array)
-            img = modified_img
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            print(f"Method 2: Elapsed Time = {elapsed_time:.6f} seconds")
-            # 将调整后的图像显示在画布上
+            self.image = modified_img
             photo = ImageTk.PhotoImage(modified_img)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
             self.canvas.image = photo
-            # self.debug_test()
-            # self.show_image()
+
+            self.show_image()
             return
 
         # --------
@@ -352,13 +344,6 @@ class WinGUI(Tk):
                 self.photo = ImageTk.PhotoImage(self.image)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
             self.crop_canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
-
-    def debug_test(self, evt=None, flag=0, refresh=0):
-
-        self.canvas.delete("all")
-        self.image_back = self.image
-        self.photo = ImageTk.PhotoImage(self.image)
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def adjust_image_size(self, flag=0):
         # 获取画布的大小
@@ -1141,9 +1126,9 @@ class Win(WinGUI):
         self.tk_scale_Smooth.bind('<B1-Motion>', self.smooth)
         self.tk_button_Histogram_equalization.bind('<Button-1>', self.adjust_equalize)
         self.tk_scale_saturation_alone.bind('<B1-Motion>', self.adjust_saturation)
-        self.tk_scale_Saturation.bind('<B1-Motion>', self.HSL_update_image)
+        self.tk_scale_Saturation.bind('<Configure>', self.adjust_L)
         self.tk_scale_Hue.bind('<B1-Motion>', self.HSL_update_image)
-        self.tk_scale_lightness.bind('<B1-Motion>', self.HSL_update_image)
+        self.tk_scale_lightness.bind('<Configure>', self.adjust_S)
         self.tk_button_rotate.bind('<Button-1>', self.rotate_image)
         self.tk_button_trim.bind('<Button-1>', self.crop_image)
         self.tk_button_add.bind('<Button-1>', self.add_text)
@@ -1154,6 +1139,7 @@ class Win(WinGUI):
         self.crop_canvas.bind("<ButtonPress>", self.on_mouse_press)
         self.crop_canvas.bind('<B1-Motion>', self.on_mouse_click)
         self.crop_canvas.bind("<ButtonRelease-1>", self.on_mouse_release)
+
         self.tk_tabs_option.bind('<<NotebookTabChanged>>', self.refresh_img)
         self.tk_button_cancel.bind('<Button-1>', self.undo_image)
         pass

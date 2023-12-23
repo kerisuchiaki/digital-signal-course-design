@@ -18,6 +18,7 @@ class WinGUI(Tk):
         super().__init__()
         # 颜色
         self.image = None
+        img = None
         self.color = tk.StringVar()
         self.color.set('red')
         colors = {
@@ -115,7 +116,7 @@ class WinGUI(Tk):
             print("No color selected.")
 
     def HSL_update_image(self, color=None):
-        # img = self.image_back
+        img = self.image_back
         color = self.color
         hsl_image = self.image_back.copy()
         # 将图像转换为HSL颜色空间
@@ -125,11 +126,63 @@ class WinGUI(Tk):
         saturation = self.tk_scale_Saturation.get() / 100.0
         lightness = self.tk_scale_lightness.get() / 100.0
         print("hue=", hue, "saturation=", saturation, "lightness=", lightness)
+
+        # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        # 针对每个像素进行HSL调整
+
+        # 使用for循环遍历像素
+        # ------------
+        # if color:
+        #     start_time = time.time()
+        #     # 将选定的颜色转换为HSL
+        #     rr, gg, bb = [int(color[i:i + 2], 16) for i in range(1, 7, 2)]
+        #     print(rr, gg, bb)
+        #     img_array = np.array(self.image)  # 把图像转成数组格式img = np.asarray(image)
+        #     shape = img_array.shape
+        #     print(img_array.shape)
+        #     height = shape[0]
+        #     width = shape[1]
+        #     print(height, width)
+        #     dst = np.zeros((height, width, 3))
+        #     for x in range(0, height):
+        #         for y in range(0, width):
+        #             (r, g, b) = img_array[x, y]
+        #             h, l, s = None, None, None
+        #             img_array[x, y] = (r, g, b)
+        #             dst[x, y] = img_array[x, y]
+        #             if r == rr and g == gg and b == bb:
+        #                 h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+        #             else:
+        #                 continue
+        #             adjusted_h = hue / 360.0 + h
+        #             if adjusted_h <= 0: adjusted_h += 1
+        #             if adjusted_h >= 1: adjusted_h -= 1
+        #             adjusted_s = saturation + s
+        #             if adjusted_s <= 0: adjusted_s = 0
+        #             if adjusted_s >= 1: adjusted_s = 1
+        #             adjusted_l = lightness + l
+        #             if adjusted_l <= 0: adjusted_l = 0
+        #             if adjusted_l >= 1: adjusted_l = 1
+        #             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
+        #             r = int(adjusted_r * 255)
+        #             g = int(adjusted_g * 255)
+        #             b = int(adjusted_b * 255)
+        #             img_array[x, y] = (r, g, b)
+        #             dst[x, y] = img_array[x, y]
+        # img2 = Image.fromarray(np.uint8(dst))
+        # self.image = img2
+        # end_time = time.time()
+        # elapsed_time = end_time - start_time
+        # print(f"Method 1: Elapsed Time = {elapsed_time:.6f} seconds")
+        # # Method 1: Elapsed Time = 0.404986 seconds
+        # self.show_image()
+        # return
+
         # 使用numpy快速遍历
         if color:
             start_time = time.time()
             # 将图像转换为numpy数组
-            img_array = np.array(self.image)
+            img_array = np.array(img)
             # 将选定的颜色转换为HSL
             rr, gg, bb = None, None, None
             color_str = color.get()
@@ -164,6 +217,17 @@ class WinGUI(Tk):
 
             # 将修改后的numpy数组转换回Image对象
             modified_img = Image.fromarray(img_array)
+            # print("开始----------------------->debug")
+            # img_array = np.asarray(modified_img)
+            # shape = img_array.shape
+            # height = shape[0]
+            # width = shape[1]
+            # print(height, width)
+            # dst = np.zeros((height, width, 3))
+            # for x in range(0, height):
+            #     for y in range(0, width):
+            #         (r, g, b) = img_array[x, y]
+            #         print(r, g, b)
             img = modified_img
             end_time = time.time()
             elapsed_time = end_time - start_time
@@ -172,6 +236,7 @@ class WinGUI(Tk):
             photo = ImageTk.PhotoImage(modified_img)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=photo)
             self.canvas.image = photo
+            self.image=img
             # self.debug_test()
             # self.show_image()
             return
