@@ -1,5 +1,7 @@
 import colorsys
+import functools
 import inspect
+import operator
 import time
 from tkinter import *
 from tkinter import filedialog, colorchooser
@@ -11,12 +13,14 @@ from tkinter.ttk import Notebook, Button
 import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageEnhance, ImageOps, ImageGrab
+from PIL.ImageOps import _lut
 
 
 class WinGUI(Tk):
     def __init__(self):
         super().__init__()
         # 颜色
+        self.photo = None
         self.image = None
         self.color = tk.StringVar()
         self.color.set('red')
@@ -129,7 +133,7 @@ class WinGUI(Tk):
         if color:
             start_time = time.time()
             # 将图像转换为numpy数组
-            img_array = np.array(self.image)
+            img_array = np.array(self.image_back)
             # 将选定的颜色转换为HSL
             rr, gg, bb = None, None, None
             color_str = color.get()
@@ -159,12 +163,11 @@ class WinGUI(Tk):
             if adjusted_l >= 1: adjusted_l = 1
             adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
             print("r=", adjusted_r * 255, "g=", adjusted_g * 255, "b=", adjusted_b * 255)
-            # 将纯红像素点变为白色
             img_array[red_condition] = [adjusted_r * 255, adjusted_g * 255, adjusted_b * 255]
 
             # 将修改后的numpy数组转换回Image对象
             modified_img = Image.fromarray(img_array)
-            img = modified_img
+            self.image = modified_img
             end_time = time.time()
             elapsed_time = end_time - start_time
             print(f"Method 2: Elapsed Time = {elapsed_time:.6f} seconds")
@@ -584,7 +587,7 @@ class WinGUI(Tk):
         return scale
 
     def __tk_scale_Hue(self, parent):
-        scale = Scale(parent, from_=-30, to=30, orient=tk.HORIZONTAL, length=200, label="Hue"
+        scale = Scale(parent, from_=-180, to=180, orient=tk.HORIZONTAL, length=200, label="Hue"
                       )
         scale.place(x=13, y=0, width=143, height=150)
         return scale
@@ -836,10 +839,41 @@ class Win(WinGUI):
             self.show_image(flag=1)
             self.last_op = inspect.currentframe().f_code.co_name
 
+    def equalize(self, image, mask=None):
+        """
+        Equalize the image histogram. This function applies a non-linear
+        mapping to the input image, in order to create a uniform
+        distribution of grayscale values in the output image.
+
+        :param image: The image to equalize.
+        :param mask: An optional mask.  If given, only the pixels selected by
+                     the mask are included in the analysis.
+        :return: An image.
+        """
+        if image.mode == "P":
+            image = image.convert("RGB")
+        h = image.histogram(mask)
+        lut = []
+        for b in range(0, len(h), 256):
+            histo = [_f for _f in h[b: b + 256] if _f]
+            if len(histo) <= 1:
+                lut.extend(list(range(256)))
+            else:
+                step = (functools.reduce(operator.add, histo) - histo[-1]) // 255
+                if not step:
+                    lut.extend(list(range(256)))
+                else:
+                    n = step // 2
+                    for i in range(256):
+                        lut.append(n // step)
+                        n = n + h[i + b]
+        return _lut(image, lut)
+
     def adjust_equalize(self, evt):
         # 直方图均衡化功能
         if hasattr(self, 'image'):
-            equalize_adjusted = ImageOps.equalize(self.image)
+            # equalize_adjusted = ImageOps.equalize(self.image)
+            equalize_adjusted = self.equalize(self.image)
             self.image = equalize_adjusted
             self.show_image()
             self.image_stack.append(self.image.copy())

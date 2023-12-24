@@ -53,7 +53,6 @@ def update_image(img, color):
         adjusted_r, adjusted_g, adjusted_b = colorsys.hls_to_rgb(adjusted_h, adjusted_l, adjusted_s)
 
 
-        # 将纯红像素点变为白色
         img_array[red_condition] = [adjusted_r, adjusted_g, adjusted_b]
 
         # 将修改后的numpy数组转换回Image对象
